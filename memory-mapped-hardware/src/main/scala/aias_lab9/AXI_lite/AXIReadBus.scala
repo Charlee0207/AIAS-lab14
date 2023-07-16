@@ -40,7 +40,7 @@ class AXIReadBus(val mSlaves: Int, val addrWidth: Int, val dataWidth: Int, val a
   val read_addr_reg        = RegInit(0.U((addrWidth).W))           // record readAddr.bits.addr (from master)
   val read_addr_reg_valid  = RegInit(false.B)                      // record readAddr.valid (from master)
   val slave_read_startAddr = Wire(Vec(mSlaves, UInt(addrWidth.W))) // start addresses of slaves in memory space
-  val slave_read_endAddr   = Wire(Vec(mSlaves, UInt(dataWidth.W))) // end addresses of slaves in memory space
+  val slave_read_endAddr   = Wire(Vec(mSlaves, UInt(addrWidth.W))) // end addresses of slaves in memory space
 
   // get memory address information from addr_map
   for (i <- 0 until addrMap.length) {

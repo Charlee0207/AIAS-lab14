@@ -41,7 +41,7 @@ class DataMem(size: Int, addrWidth: Int, dataWidth: Int, binaryFile: String) ext
       stateReg := Mux((io.bus_slave.readData.ready), sIdle, sReadResp)
     }
     is(sWriteResp) {
-      stateReg := Mux((io.bus_slave.writeResp.ready), sIdle, sReadResp)
+      stateReg := Mux((io.bus_slave.writeResp.ready), sIdle, sWriteResp)
     }
   }
 
