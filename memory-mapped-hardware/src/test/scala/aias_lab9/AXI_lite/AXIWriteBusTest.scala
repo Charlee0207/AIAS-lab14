@@ -1,4 +1,4 @@
-package aias_lab9.AXILite
+package acal_lab14.AXILite
 
 import chisel3._
 import chisel3.iotesters.{Driver, PeekPokeTester}

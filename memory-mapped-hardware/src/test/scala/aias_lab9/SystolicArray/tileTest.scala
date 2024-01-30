@@ -1,9 +1,9 @@
-package aias_lab9.SystolicArray
+package acal_lab14.SystolicArray
 
 import chisel3._
 import chisel3.iotesters.{Driver, PeekPokeTester}
 import scala.util.Random
-import aias_lab9.SystolicArray
+import acal_lab14.SystolicArray
 import scala.language.implicitConversions
 
 class tileTest(dut: tile) extends PeekPokeTester(dut) {
