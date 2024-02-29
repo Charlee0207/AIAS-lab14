@@ -3,7 +3,7 @@ package acal_lab14.VectorCPU
 import chisel3._
 import chisel3.util._
 
-import acal_lab14.AXILite._
+import acal_lab14.AXIBus._
 
 import acal_lab14.VectorCPU.Memory._
 import acal_lab14.VectorCPU.Controller._
@@ -11,10 +11,10 @@ import acal_lab14.VectorCPU.Datapath._
 
 import acal_lab14.VectorCPU.opcode_map._
 
-class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) extends Module {
+class VectorCPU(mIdWidth: Int, memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) extends Module {
   val io = IO(new Bundle {
     // AXI
-    val bus_master = new AXILiteMasterIF(memAddrWidth, memDataWidth)
+    val bus_master = new Axi4MasterIF(mIdWidth, memAddrWidth, memDataWidth)
 
     // System
     val pc          = Output(UInt(15.W))
@@ -24,7 +24,7 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
 
   // Module
   val im  = Module(new InstMem(15, instrBinaryFile))
-  val ct  = Module(new Controller(memAddrWidth, memDataWidth))
+  val ct  = Module(new Controller(mIdWidth, memAddrWidth, memDataWidth))
   val pc  = Module(new PC())
   val ig  = Module(new ImmGen())
   val rf  = Module(new RegFile(2))
@@ -40,16 +40,12 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
   val funct3    = Wire(UInt(3.W))
   val inst_31_7 = Wire(UInt(25.W))
 
-  val funct6 = Wire(UInt(6.W))
-
   opcode    := im.io.inst(6, 0)
   rd        := im.io.inst(11, 7)
   rs1       := im.io.inst(19, 15)
   rs2       := im.io.inst(24, 20)
   funct3    := im.io.inst(14, 12)
   inst_31_7 := im.io.inst(31, 7)
-
-  funct6 := im.io.inst(31, 26)
 
   // PC
   pc.io.PCSel   := ct.io.PCSel
@@ -74,13 +70,13 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
     Seq(
       0.U -> MuxLookup(
         funct3,
-        io.bus_master.readData.bits.data(31, 0),
+        io.bus_master.r.bits.data(31, 0),
         Seq(
-          "b000".U(3.W) -> Cat(Fill(24, io.bus_master.readData.bits.data(7)), io.bus_master.readData.bits.data(7, 0)),
-          "b001".U(3.W) -> Cat(Fill(16, io.bus_master.readData.bits.data(15)), io.bus_master.readData.bits.data(15, 0)),
-          "b010".U(3.W) -> io.bus_master.readData.bits.data(31, 0),
-          "b100".U(3.W) -> Cat(0.U(24.W), io.bus_master.readData.bits.data(7, 0)),
-          "b101".U(3.W) -> Cat(0.U(16.W), io.bus_master.readData.bits.data(15, 0))
+          "b000".U(3.W) -> Cat(Fill(24, io.bus_master.r.bits.data(7)), io.bus_master.r.bits.data(7, 0)),
+          "b001".U(3.W) -> Cat(Fill(16, io.bus_master.r.bits.data(15)), io.bus_master.r.bits.data(15, 0)),
+          "b010".U(3.W) -> io.bus_master.r.bits.data(31, 0),
+          "b100".U(3.W) -> Cat(0.U(24.W), io.bus_master.r.bits.data(7, 0)),
+          "b101".U(3.W) -> Cat(0.U(16.W), io.bus_master.r.bits.data(15, 0))
         )
       ),
       1.U -> alu.io.out,      // from ALU
@@ -121,26 +117,18 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
   ct.io.BrLT := bc.io.BrLT
 
   // AXI Bus
-  io.bus_master.writeAddr <> ct.io.writeAddr
-  io.bus_master.writeData <> ct.io.writeData
-  io.bus_master.writeResp <> ct.io.writeResp
-  io.bus_master.readAddr <> ct.io.readAddr
-  io.bus_master.readData <> ct.io.readData
+  io.bus_master.aw <> ct.io.aw
+  io.bus_master.w <> ct.io.w
+  io.bus_master.b <> ct.io.b
+  io.bus_master.ar <> ct.io.ar
+  io.bus_master.r <> ct.io.r
 
-  io.bus_master.readAddr.bits.addr  := alu.io.out
-  io.bus_master.writeAddr.bits.addr := alu.io.out
-  io.bus_master.writeData.bits.data := MuxLookup(
-    ct.io.MemSel,
-    0.U,
-    Seq(
-      0.U -> rf.io.rdata(1),
-    )
-  )
-  io.bus_master.writeData.bits.strb := MuxLookup(
-    opcode,
-    0.U,
-    Seq(
-      STORE -> (MuxLookup(
+  io.bus_master.ar.bits.addr  := alu.io.out
+  io.bus_master.aw.bits.addr := alu.io.out
+  io.bus_master.w.bits.data := rf.io.rdata(1)
+  io.bus_master.w.bits.strb := MuxLookup(opcode, 0.U,
+  Seq(
+    STORE -> (MuxLookup(
         funct3,
         0.U,
         Seq(

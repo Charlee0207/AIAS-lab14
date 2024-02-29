@@ -72,3 +72,4 @@ object alu_op_map {
   val ORC_B  = "b0010100_00111_101".U
 }
 
+

@@ -5,12 +5,15 @@ import chisel3.util._
 
 import acal_lab14.VectorCPU._
 import acal_lab14.Memory._
-import acal_lab14.AXILite._
+import acal_lab14.AXIBus._
 
 object config {
+  val nMasters       = 1
+  val id_width       = 2
   val addr_width     = 32
-  val data_width     = 64
-  val addr_map       = List(("h8000".U, "h10000".U))
+  val data_width     = 32
+  val addr_map       = Seq((8000, 8000)) // First element specify the starting address and second element specify memory space size
+  val nSlaves        = addr_map.length
   val instr_hex_path = "src/main/resource/VectorCPU/m_code.hex"
   val data_mem_size  = 16 // power of 2 in byte
   val data_hex_path  = "src/main/resource/VectorCPU/data.hex"
@@ -27,9 +30,9 @@ class top extends Module {
     val cycle_count = Output(UInt(32.W))
   })
 
-  val cpu = Module(new VectorCPU(addr_width, data_width, instr_hex_path))
+  val cpu = Module(new VectorCPU(id_width, addr_width, data_width, instr_hex_path))
   val dm  = Module(new DataMem(data_mem_size, addr_width, data_width, data_hex_path))
-  val bus = Module(new AXILiteXBar(1, addr_map.length, addr_width, data_width, addr_map))
+  val bus = Module(new AXILiteXBar(nMasters, nSlaves, id_width, addr_width, data_width, addr_map))
 
   // AXI Lite Bus
   bus.io.masters(0) <> cpu.io.bus_master
