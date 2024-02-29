@@ -1,4 +1,4 @@
-package acal_lab14.VectorCPU.Memory
+package acal_lab14.SingleCycleCPU.Memory
 
 import chisel3._
 import chisel3.util._

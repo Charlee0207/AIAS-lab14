@@ -1,15 +1,15 @@
-package acal_lab14.VectorCPU
+package acal_lab14.SingleCycleCPU
 
 import chisel3._
 import chisel3.util._
 
 import acal_lab14.AXIBus._
 
-import acal_lab14.VectorCPU.Memory._
-import acal_lab14.VectorCPU.Controller._
-import acal_lab14.VectorCPU.Datapath._
+import acal_lab14.SingleCycleCPU.Memory._
+import acal_lab14.SingleCycleCPU.Controller._
+import acal_lab14.SingleCycleCPU.Datapath._
 
-import acal_lab14.VectorCPU.opcode_map._
+import acal_lab14.SingleCycleCPU.opcode_map._
 
 class VectorCPU(mIdWidth: Int, memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) extends Module {
   val io = IO(new Bundle {

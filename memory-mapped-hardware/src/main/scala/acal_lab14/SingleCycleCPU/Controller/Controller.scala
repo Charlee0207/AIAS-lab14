@@ -1,13 +1,13 @@
-package acal_lab14.VectorCPU.Controller
+package acal_lab14.SingleCycleCPU.Controller
 
 import chisel3._
 import chisel3.util._
 
 import acal_lab14.AXIBus._
 
-import acal_lab14.VectorCPU.opcode_map._
-import acal_lab14.VectorCPU.condition._
-import acal_lab14.VectorCPU.inst_type._
+import acal_lab14.SingleCycleCPU.opcode_map._
+import acal_lab14.SingleCycleCPU.condition._
+import acal_lab14.SingleCycleCPU.inst_type._
 
 class Controller(mIdWidth: Int , memAddrWidth: Int, memDataWidth: Int) extends Module {
   val io = IO(new Bundle {

@@ -1,9 +1,9 @@
-package acal_lab14.VectorCPU.Datapath
+package acal_lab14.SingleCycleCPU.Datapath
 
 import chisel3._
 import chisel3.util._
 
-import acal_lab14.VectorCPU.inst_type._
+import acal_lab14.SingleCycleCPU.inst_type._
 
 class ImmGen extends Module {
   val io = IO(new Bundle {

@@ -3,7 +3,7 @@ package acal_lab14.topVectorCPU
 import chisel3._
 import chisel3.util._
 
-import acal_lab14.VectorCPU._
+import acal_lab14.SingleCycleCPU._
 import acal_lab14.Memory._
 import acal_lab14.AXIBus._
 
