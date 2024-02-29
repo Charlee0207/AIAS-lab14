@@ -1,4 +1,4 @@
-package AXI
+package AXIBus
 
 import chisel3._
 import chisel3.util._
