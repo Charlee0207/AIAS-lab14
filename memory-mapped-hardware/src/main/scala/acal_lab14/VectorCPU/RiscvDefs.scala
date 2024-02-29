@@ -14,9 +14,6 @@ object opcode_map {
   val AUIPC  = "b0010111".U
   val LUI    = "b0110111".U
   val HCF    = "b0001011".U
-  val OP_V   = "b1010111".U
-  val VL     = "b0000111".U
-  val VS     = "b0100111".U
 }
 
 object condition { // [func3] inst(14, 12)
@@ -75,7 +72,3 @@ object alu_op_map {
   val ORC_B  = "b0010100_00111_101".U
 }
 
-object vector_alu_op_map {
-  val VADD_VV  = 0.U
-  val VMACC_VV = 1.U
-}

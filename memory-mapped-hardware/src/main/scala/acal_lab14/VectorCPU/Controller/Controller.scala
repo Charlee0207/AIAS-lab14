@@ -8,7 +8,6 @@ import acal_lab14.AXILite._
 import acal_lab14.VectorCPU.opcode_map._
 import acal_lab14.VectorCPU.condition._
 import acal_lab14.VectorCPU.inst_type._
-import acal_lab14.VectorCPU.vector_alu_op_map._
 
 class Controller(memAddrWidth: Int, memDataWidth: Int) extends Module {
   val io = IO(new Bundle {
@@ -37,11 +36,6 @@ class Controller(memAddrWidth: Int, memDataWidth: Int) extends Module {
     val Lui = Output(Bool())
     val Hcf = Output(Bool())
 
-    val vector_ALUSel = Output(UInt(4.W))
-    val vector_ASel   = Output(Bool())
-    val vector_BSel   = Output(Bool())
-    val vector_WBSel  = Output(UInt(2.W))
-    val vector_RegWEn = Output(Bool())
   })
 
   val opcode = io.Inst(6, 0)
@@ -57,8 +51,8 @@ class Controller(memAddrWidth: Int, memDataWidth: Int) extends Module {
 
   val isDataLoad  = Wire(Bool())
   val isDataStore = Wire(Bool())
-  isDataLoad  := (opcode === LOAD | opcode === VL)
-  isDataStore := (opcode === STORE | opcode === VS)
+  isDataLoad  := (opcode === LOAD)
+  isDataStore := (opcode === STORE)
 
   // DataMemAccessState - next state decoder
   switch(DataMemAccessState) {
@@ -234,8 +228,6 @@ class Controller(memAddrWidth: Int, memDataWidth: Int) extends Module {
     1.U,
     Seq(
       OP -> 0.U,
-      VS -> 2.U,
-      VL -> 2.U
     )
   )
   io.ALUSel := alu_op
@@ -246,7 +238,6 @@ class Controller(memAddrWidth: Int, memDataWidth: Int) extends Module {
     false.B,
     Seq(
       STORE -> true.B,
-      VS    -> true.B
     )
   )
   io.MemSel := MuxLookup(
@@ -254,7 +245,6 @@ class Controller(memAddrWidth: Int, memDataWidth: Int) extends Module {
     0.U,
     Seq(
       STORE -> 0.U,
-      VS    -> 1.U
     )
   )
 
@@ -296,53 +286,6 @@ class Controller(memAddrWidth: Int, memDataWidth: Int) extends Module {
       LOAD -> 0.U,
       JALR -> 2.U,
       JAL  -> 2.U
-    )
-  )
-
-  // Control signal - Vector ALU
-  io.vector_ALUSel := MuxLookup(
-    Cat(funct6, funct3),
-    0.U,
-    Seq(
-      Cat("b000000".U(6.W), "b000".U(3.W)) -> VADD_VV,
-      Cat("b101101".U(6.W), "b000".U(3.W)) -> VMACC_VV
-    )
-  )
-  io.vector_ASel := false.B
-  io.vector_BSel := false.B
-
-  // Control signal - Vector Write Back
-  io.vector_RegWEn := false.B
-  switch(DataMemAccessState) {
-    is(sNormal) {
-      io.vector_RegWEn := MuxLookup(
-        opcode,
-        false.B,
-        Seq(
-          OP_V -> true.B
-        )
-      )
-    }
-    is(sAXIReadSend) {
-      io.vector_RegWEn := false.B
-    }
-    is(sAXIReadWait) {
-      io.vector_RegWEn := Mux((io.readData.valid & (opcode === VL)), true.B, false.B)
-    }
-    is(sAXIWriteSend) {
-      io.vector_RegWEn := false.B
-    }
-    is(sAXIWriteWait) {
-      io.vector_RegWEn := false.B
-    }
-  }
-
-  io.vector_WBSel := MuxLookup(
-    opcode,
-    0.U,
-    Seq(
-      OP_V -> 0.U,
-      VL   -> 1.U
     )
   )
 

@@ -19,7 +19,6 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
     // System
     val pc          = Output(UInt(15.W))
     val regs        = Output(Vec(32, UInt(32.W)))
-    val vector_regs = Output(Vec(32, UInt(64.W)))
     val Hcf         = Output(Bool())
   })
 
@@ -32,8 +31,6 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
   val alu = Module(new ALU())
   val bc  = Module(new BranchComp())
 
-  val vrf  = Module(new Vector_RegFile(3))
-  val valu = Module(new Vector_ALU())
 
   // wire
   val opcode    = Wire(UInt(7.W))
@@ -43,9 +40,6 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
   val funct3    = Wire(UInt(3.W))
   val inst_31_7 = Wire(UInt(25.W))
 
-  val vd     = Wire(UInt(5.W))
-  val vs1    = Wire(UInt(5.W))
-  val vs2    = Wire(UInt(5.W))
   val funct6 = Wire(UInt(6.W))
 
   opcode    := im.io.inst(6, 0)
@@ -55,9 +49,6 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
   funct3    := im.io.inst(14, 12)
   inst_31_7 := im.io.inst(31, 7)
 
-  vd     := im.io.inst(11, 7)
-  vs1    := im.io.inst(19, 15)
-  vs2    := im.io.inst(24, 20)
   funct6 := im.io.inst(31, 26)
 
   // PC
@@ -97,20 +88,6 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
     )
   )
 
-  // Vector RegFile
-  vrf.io.vector_raddr(0) := vd
-  vrf.io.vector_raddr(1) := vs1
-  vrf.io.vector_raddr(2) := vs2
-  vrf.io.vector_waddr    := vd
-  vrf.io.vector_wen      := ct.io.vector_RegWEn
-  vrf.io.vector_wdata := MuxLookup(
-    ct.io.vector_WBSel,
-    0.U,
-    Seq(
-      0.U -> valu.io.vector_out,              // from Vector ALU
-      1.U -> io.bus_master.readData.bits.data // from DataMemory
-    )
-  )
 
   // ALU
   val rdata_or_zero = Mux(ct.io.Lui, 0.U(32.W), rf.io.rdata(0))
@@ -128,16 +105,10 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
     Seq(
       0.U -> rf.io.rdata(1),
       1.U -> ig.io.imm,
-      2.U -> 0.U
     )
   )
   alu.io.ALUSel := ct.io.ALUSel
 
-  // Vector ALU
-  valu.io.vector_src0   := vrf.io.vector_rdata(0)
-  valu.io.vector_src1   := vrf.io.vector_rdata(1)
-  valu.io.vector_src2   := vrf.io.vector_rdata(2)
-  valu.io.vector_ALUSel := ct.io.vector_ALUSel
 
   // Branch Comparator
   bc.io.BrUn := ct.io.BrUn
@@ -163,7 +134,6 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
     0.U,
     Seq(
       0.U -> rf.io.rdata(1),
-      1.U -> vrf.io.vector_rdata(0)
     )
   )
   io.bus_master.writeData.bits.strb := MuxLookup(
@@ -179,13 +149,11 @@ class VectorCPU(memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) e
           "b010".U(3.W) -> "b1111".U
         )
       )),
-      VS -> "b11111111".U
     )
   )
 
   // System
   io.pc          := pc.io.pc
   io.regs        := rf.io.regs
-  io.vector_regs := vrf.io.vector_regs
   io.Hcf         := ct.io.Hcf
 }

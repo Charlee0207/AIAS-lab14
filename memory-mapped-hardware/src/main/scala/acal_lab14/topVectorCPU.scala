@@ -22,7 +22,6 @@ class top extends Module {
   val io = IO(new Bundle {
     val pc          = Output(UInt(15.W))
     val regs        = Output(Vec(32, UInt(32.W)))
-    val vector_regs = Output(Vec(32, UInt(64.W)))
     val Hcf         = Output(Bool())
 
     val cycle_count = Output(UInt(32.W))
@@ -41,7 +40,6 @@ class top extends Module {
   io.regs := cpu.io.regs
   io.Hcf  := cpu.io.Hcf
 
-  io.vector_regs := cpu.io.vector_regs
 
   val cycle_counter = RegInit(1.U(32.W))
   cycle_counter  := cycle_counter + 1.U
