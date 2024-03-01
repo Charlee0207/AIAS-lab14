@@ -1,4 +1,4 @@
-package acal_lab14.VectorCPU.Datapath
+package acal_lab14.SingleCycleCPU.Datapath
 
 import chisel3._
 
