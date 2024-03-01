@@ -7,7 +7,7 @@ def scalacOptionsVersion(scalaVersion: String): Seq[String] = {
     //  https://github.com/scala/bug/issues/10047
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, scalaMajor: Long)) if scalaMajor < 12 => Seq()
-      case _ => Seq("-Xsource:2.11")
+      case _ => Seq("-Xsource:2.13")
     }
   }
 }
@@ -33,13 +33,15 @@ name := "acal_lab14"
 
 version := "0.1.0"
 
-scalaVersion := "2.12.15"
+scalaVersion := "2.13.8"
 
-// addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % "3.5.0" cross CrossVersion.full)
+libraryDependencies += "edu.berkeley.cs" %% "chisel3" % "3.5.4"
 
-libraryDependencies += "edu.berkeley.cs" %% "chisel3" % "3.4.4"
+libraryDependencies += "edu.berkeley.cs" %% "chisel-iotesters" % "2.5.4" % "test"
 
-libraryDependencies += "edu.berkeley.cs" %% "chisel-iotesters" % "1.5.4" % "test"
+libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.5.4" % "test"
+
+addCompilerPlugin("edu.berkeley.cs" % "chisel3-plugin" % "3.5.4" cross CrossVersion.full)
 
 scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-language:reflectiveCalls") ++ scalacOptionsVersion(scalaVersion.value)
 
