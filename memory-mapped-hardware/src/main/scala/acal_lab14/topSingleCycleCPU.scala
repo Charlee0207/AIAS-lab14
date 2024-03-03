@@ -1,4 +1,4 @@
-package acal_lab14.topVectorCPU
+package acal_lab14.topSingleCycleCPU
 
 import chisel3._
 import chisel3.util._

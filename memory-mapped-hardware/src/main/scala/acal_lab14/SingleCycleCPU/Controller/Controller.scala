@@ -92,7 +92,7 @@ class Controller(mIdWidth: Int , memAddrWidth: Int, memDataWidth: Int) extends M
   io.w.valid     := false.B
   io.w.bits.data := 0.U
   io.w.bits.strb := 0.U
-  io.w.bits.last := false.B
+  io.w.bits.last := true.B
   // ---- b channel ----
   io.b.ready     := false.B
 
@@ -124,7 +124,7 @@ class Controller(mIdWidth: Int , memAddrWidth: Int, memDataWidth: Int) extends M
   }
 
 
-
+  // output signals
   switch(DataMemAccessState) {
     is(sNormal) {
       io.ar.valid  := isDataLoad
@@ -277,8 +277,9 @@ class Controller(mIdWidth: Int , memAddrWidth: Int, memDataWidth: Int) extends M
   )
   io.ALUSel := alu_op
 
-
-  // Control signal - Scalar Write Back
+  // ---------------------------------------------
+  // ---- Control signal - Scalar Write Back -----
+  // ---------------------------------------------
   io.RegWEn := false.B
   switch(DataMemAccessState) {
     is(sNormal) {
@@ -318,7 +319,8 @@ class Controller(mIdWidth: Int , memAddrWidth: Int, memDataWidth: Int) extends M
       JAL  -> 2.U
     )
   )
-
-  // Control signal - Others
+  // -------------------------------
+  // --- Control signal - Others ---
+  // -------------------------------
   io.Hcf := (opcode === HCF)
 }
