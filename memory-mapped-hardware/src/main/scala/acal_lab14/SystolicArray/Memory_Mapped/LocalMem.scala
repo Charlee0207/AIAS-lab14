@@ -36,9 +36,9 @@ class LocalMem(mem_size: Int, addr_width: Int, data_width: Int) extends Module {
   // * when you execute acal_lab14.topSystolicArray.topTest, please comment line 28, which is about preload LocalMem
 
   // wires declaration
-  // address -> truncate lower 3 bits to transfer byte addr to double-word address
-  val raddr_aligned = WireDefault(io.raddr >> 3)
-  val waddr_aligned = WireDefault(io.waddr >> 3)
+  // address -> truncate lower 2 bits to transfer byte addr to word address
+  val raddr_aligned = WireDefault(io.raddr >> log2Ceil(data_width>>3))
+  val waddr_aligned = WireDefault(io.waddr >> log2Ceil(data_width>>3))
   val wdata_mask    = Wire(Vec(data_width >> 3, UInt(byte.W))) // write data after masked
 
   wdata_mask := DontCare // avoid compilation error when signal is not fully initialized
