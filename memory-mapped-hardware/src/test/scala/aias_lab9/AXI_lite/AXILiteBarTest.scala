@@ -22,7 +22,7 @@
 // // allocation of 2 slaves in memory space
 
 
-// class AXIReadBusTest extends AnyFlatSpec with ChiselScalatestTester{
+// class AXILiteXBarTest extends AnyFlatSpec with ChiselScalatestTester{
 //       // Functions for generating test vectors
 //     def genAXIawSignals(addr: BigInt): Axi4Request = {
 //         var res = (new Axi4Request(Config.s_id_width, Config.addr_width, Config.data_width)).Lit(
@@ -87,8 +87,6 @@
 //         res
 //     }
   
-//     def resetSignals(): 
-
 //     "Masters" should "send/read data to each Slaves according to addr" in {
 //         test(new AXILiteXBar(
 //             Config.master_num,

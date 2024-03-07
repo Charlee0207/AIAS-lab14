@@ -80,7 +80,7 @@ class tileTest(dut: tile) extends PeekPokeTester(dut) {
       }
     }
 
-    //     // // check_answer the correctness of output in the appropriate timing (calculated)
+    //     //check_answer the correctness of output in the appropriate timing (calculated)
     //     // if(clk >= 2*mat_size){
     //     //     val clk_pp = clk - 2*mat_size
     //     //     for(idx <- 0 until mat_size){

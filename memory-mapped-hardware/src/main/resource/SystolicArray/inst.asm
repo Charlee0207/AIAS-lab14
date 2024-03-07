@@ -1,76 +1,76 @@
+addi sp, sp, -24
+sw s0, 0(sp)
+sw s1, 4(sp)
+sw s2, 8(sp)
+sw s3, 12(sp)
+sw s4, 16(sp)
+sw s5, 20(sp)
+sw ra, 24(sp)
 lui x08, 0x00000008
 addi x08, x08, 0x00000000
 lui x09, 0x00000008
-addi x09, x09, 0x00000010
+addi x09, x09, 0x00000006
 lui x18, 0x00000008
-addi x18, x18, 0x00000020
+addi x18, x18, 0x0000000c
 lui x19, 0x00000000
-addi x19, x19, 0x00000004
+addi x19, x19, 0x00000003
 lui x20, 0x00000000
-addi x20, x20, 0x00000004
+addi x20, x20, 0x00000002
 lui x21, 0x00000000
-addi x21, x21, 0x00000004
-lui x31, 0x00000008
-addi x31, x31, 0x00000034
-lw t0, 0(t6)
-mul t3, s3, s4
-add t1, t0, t3
-mul t3, s4, s5
-add t2, t1, t3
-mul t3, s3, s4
-lui x29, 0x00000000
-addi x29, x29, 0x00000000
-add t5, s0, t4
-vle8_v v1, 0(t5)
-add t5, t0, t4
-vse8_v v1, 0(t5)
-addi t4, t4, 8
-blt t4, t3, loop_a
-mul t3, s4, s5
-lui x29, 0x00000000
-addi x29, x29, 0x00000000
-add t5, s1, t4
-vle8_v v1, 0(t5)
-add t5, t1, t4
-vse8_v v1, 0(t5)
-addi t4, t4, 8
-blt t4, t3, loop_b
-lui x31, 0x00000008
-addi x31, x31, 0x00000030
-lw t3, 0(t6)
-lui x31, 0x00000008
-addi x31, x31, 0x00000040
-lw t4, 0(t6)
-add t4, t3, t4
-sw t0, 0(t4)
-lui x31, 0x00000008
-addi x31, x31, 0x00000044
-lw t4, 0(t6)
-add t4, t3, t4
-sw t1, 0(t4)
-lui x31, 0x00000008
-addi x31, x31, 0x00000048
-lw t4, 0(t6)
-add t4, t3, t4
-sw t2, 0(t4)
-lui x31, 0x00000008
-addi x31, x31, 0x00000038
-lw t4, 0(t6)
-add t4, t3, t4
-lui x30, 0x00000000
-addi x30, x30, 0x00000001
-sw t5, 0(t4)
-lui x31, 0x00000008
-addi x31, x31, 0x0000003c
-lw t4, 0(t6)
-add t4, t3, t4
-lw t5, 0(t4)
-lui x31, 0x00000000
-addi x31, x31, 0x00000001
-beq t5, t6, finish
-j x0, hang
-sw zero, 0(t4)
-vle8_v v1, 0(t2)
-addi t2, t2, 8
-vle8_v v2, 0(t2)
+addi x21, x21, 0x00000003
+lui x05, 0x00000000
+addi x05, x05, 0x00000000
+lui x06, 0x00000000
+addi x06, x06, 0x00000000
+lui x07, 0x00000000
+addi x07, x07, 0x00000000
+bge t0, s3, epilogue
+lui x06, 0x00000000
+addi x06, x06, 0x00000000
+jal dimn
+addi t0, t0, 1
+j x0, dimm
+bge t1, s5, return
+addi sp, sp, -4
+sw ra, 0(sp)
+lui x07, 0x00000000
+addi x07, x07, 0x00000000
+jal dimk
+lw ra, 0(sp)
+addi sp, sp, 4
+addi t1, t1, 1
+j x0, dimn
+bge t2, s4, return
+addi sp, sp, -4
+sw ra, 0(sp)
+jal mult
+lw ra, 0(sp)
+addi sp, sp, 4
+addi t2, t2, 1
+j x0, dimk
+mul t3, t0, s4
+add t3, t3, t2
+add t3, s0, t3
+lb t3, 0(t3)
+mul t4, t2, s5
+add t4, t4, t1
+add t4, s1, t4
+lb t4, 0(t4)
+mul t5, t3, t4
+mul t6, t0, s5
+add t6, t6, t1
+add t6, s2, t6
+lb t3, 0(t6)
+add t5, t5, t3
+sb t5, 0(t6)
+jalr x0, x1, x0
+jalr x0, x1, x0
+lw s0, 0(sp)
+lw s1, 4(sp)
+lw s2, 8(sp)
+sw s3, 12(sp)
+sw s4, 16(sp)
+sw s5, 20(sp)
+lw ra, 24(sp)
+addi sp, sp, 24
 hcf

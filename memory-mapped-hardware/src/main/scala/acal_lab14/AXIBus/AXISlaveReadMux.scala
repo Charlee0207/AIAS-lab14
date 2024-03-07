@@ -1,4 +1,4 @@
-package acal_lab14.AXIBus
+package acal_lab14.AXILite
 
 import chisel3._
 import chisel3.util._
@@ -31,6 +31,8 @@ class AXISlaveReadMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, v
     io.in(i).readData.bits.data := io.out.readData.bits.data
     io.in(i).readData.valid := false.B
     io.in(i).readData.bits.resp := 0.U
+    io.in(i).readData.bits.id := DontCare
+    io.in(i).readData.bits.last := true.B
   }
   io.in(chosen_reg).readData <> io.out.readData
 }

@@ -1,4 +1,4 @@
-package acal_lab14.AXIBus
+package acal_lab14.AXILite
 
 import chisel3._
 import chisel3.util._
@@ -33,6 +33,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
   for (i <- 0 until nMasters) {
     io.in(i).writeData.ready := false.B
     io.in(i).writeResp.valid := false.B
+    io.in(i).writeResp.bits.id := DontCare
     io.in(i).writeResp.bits.resp := 0.U
   }
 

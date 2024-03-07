@@ -1,4 +1,4 @@
-package acal_lab14.AXIBus
+package acal_lab14.AXILite
 
 import chisel3._
 import chisel3.util._
