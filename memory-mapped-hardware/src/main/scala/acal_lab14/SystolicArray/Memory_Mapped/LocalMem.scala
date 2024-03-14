@@ -30,10 +30,8 @@ class LocalMem(mem_size: Int, addr_width: Int, data_width: Int) extends Module {
 
   // use SyncReadMem module from chisel.util
   val localMem = SyncReadMem(mem_size, UInt(data_width.W))
-  // preload data from hex file
+  // preload data from hex file (Comment this line for running acal_lab14.topSystolicArray.topTest)
   loadMemoryFromFile(localMem, "src/main/resource/SystolicArray/LocalMem.hex")
-
-  // * when you execute acal_lab14.topSystolicArray.topTest, please comment line 28, which is about preload LocalMem
 
   // wires declaration
   // address -> truncate lower 2 bits to transfer byte addr to word address
@@ -43,7 +41,7 @@ class LocalMem(mem_size: Int, addr_width: Int, data_width: Int) extends Module {
 
   wdata_mask := DontCare // avoid compilation error when signal is not fully initialized
 
-  // memory read
+  // read port ==> refer to [SyncReadMem - One read port & one write port](https://www.chisel-lang.org/docs/explanations/memories#read-portwrite-port)
   io.rdata := localMem.read(raddr_aligned)
 
   // memory write
@@ -56,7 +54,7 @@ class LocalMem(mem_size: Int, addr_width: Int, data_width: Int) extends Module {
         0.U
       )
     }
-    // do write
+    // write port ==> refer to [SyncReadMem - One read port & one write port](https://www.chisel-lang.org/docs/explanations/memories#read-portwrite-port)
     localMem.write(waddr_aligned, wdata_mask.asTypeOf(UInt(data_width.W)))
   }
 }

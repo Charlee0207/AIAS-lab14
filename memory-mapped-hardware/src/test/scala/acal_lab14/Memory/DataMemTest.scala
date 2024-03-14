@@ -8,7 +8,7 @@ import chiseltest.ChiselScalatestTester
 import chiseltest.simulator.WriteVcdAnnotation
 import chisel3.experimental.BundleLiterals._
 
-import AXI._
+import acal_lab14.AXI._
 
 object Mem_config {
     val s_id_width = 17

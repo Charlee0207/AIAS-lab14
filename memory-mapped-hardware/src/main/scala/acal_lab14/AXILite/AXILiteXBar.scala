@@ -2,7 +2,7 @@ package acal_lab14.AXILite
 
 import chisel3._
 import chisel3.util._
-import AXI._
+import acal_lab14.AXI._
 
 class AXILiteXBar(val nMasters: Int, val mSlaves: Int, val idWidth: Int, val addrWidth: Int, val dataWidth: Int, val addrMap: Seq[(Int, Int)]) extends Module {
   val io = IO(new Bundle {

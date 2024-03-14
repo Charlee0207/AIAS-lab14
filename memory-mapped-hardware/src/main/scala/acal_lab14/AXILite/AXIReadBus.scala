@@ -2,7 +2,7 @@ package acal_lab14.AXILite
 
 import chisel3._
 import chisel3.util._
-import AXI._
+import acal_lab14.AXI._
 
 class readMaster(val idWidth: Int, val addrWidth: Int, val dataWidth: Int) extends Bundle {
   val readAddr = Flipped(Decoupled(new Axi4Request(idWidth, addrWidth, dataWidth)))

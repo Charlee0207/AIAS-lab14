@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.loadMemoryFromFile
 
-import AXI._
+import acal_lab14.AXI._
 
 class DataMem(SIdWidth: Int, Size: Int, AddrWidth: Int, DataWidth: Int, MemoryFile: String = "") extends Module {
     val io = IO(new Bundle {

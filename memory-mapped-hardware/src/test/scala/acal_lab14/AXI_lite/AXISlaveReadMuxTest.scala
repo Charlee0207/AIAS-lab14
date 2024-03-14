@@ -8,7 +8,7 @@ import chiseltest.ChiselScalatestTester
 import chiseltest.simulator.WriteVcdAnnotation
 import chisel3.experimental.BundleLiterals._
 
-import AXI._
+import acal_lab14.AXI._
 
 // allocation of 2 slaves in memory space
 
@@ -64,7 +64,7 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
             }
             dut.io.out.readData.initSource().setSourceClock(dut.clock)
             dut.io.out.readAddr.initSink().setSinkClock(dut.clock)
-            
+
             println("----START TEST----")
 
             println("[Test 1] Input address from master 0")
@@ -151,6 +151,6 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
                 .joinAndStep(dut.clock)
             println("----TEST END----")
         }
-    
+
     }
 }
