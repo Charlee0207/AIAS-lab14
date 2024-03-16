@@ -1,206 +1,192 @@
-// package acal_lab14.AXILite
+package acal_lab14.AXILite
 
-// import chisel3._
-// import chiseltest._
-// import org.scalatest.flatspec.AnyFlatSpec
-// import chiseltest.ChiselScalatestTester
+import chisel3._
+import chiseltest._
+import org.scalatest.flatspec.AnyFlatSpec
+import chiseltest.ChiselScalatestTester
 
-// import chiseltest.simulator.WriteVcdAnnotation
-// import chisel3.experimental.BundleLiterals._
+import chiseltest.simulator.WriteVcdAnnotation
+import chisel3.experimental.BundleLiterals._
 
-// import AXI._
+import acal_lab14.AXI._
+import Config._
 
-// object Config {
-//     val master_num = 2,     // number of masters
-//     val slave_num = 2,      // number of slaves
-//     val s_id_width = 17
-//     val addr_width = 32,
-//     val data_width = 32
-//     val addr_map = List(("h8000".U, "h10000".U), ("h10000".U, "h20000".U))
-// }
-
-// // allocation of 2 slaves in memory space
+// allocation of 2 slave in memory space
 
 
-// class AXIReadBusTest extends AnyFlatSpec with ChiselScalatestTester{
-//       // Functions for generating test vectors
-//     def genAXIawSignals(addr: BigInt): Axi4Request = {
-//         var res = (new Axi4Request(Config.s_id_width, Config.addr_width, Config.data_width)).Lit(
-//             _.addr -> addr.U,
-//             _.burst -> 0.U, // Burst mode : FIXED
-//             _.cache -> 0.U,
-//             _.id    -> 1.U, // Avoid using zero id
-//             _.len   -> 0.U, // one beat in a burst
-//             _.lock  -> 0.U,
-//             _.prot  -> 0.U,
-//             _.qos   -> 0.U,
-//             _.region -> 0.U,
-//             _.size  -> "b010".U // 4 bytes per beat
-//         )
-//         println(s"[DEBUG] the generated aw signals : ${res}")
-//         res
-//     }
+class AXIReadBusTest extends AnyFlatSpec with ChiselScalatestTester{
+    // Functions for generating test vectors
+    def genAXIarSignals(addr: BigInt): Axi4Request = {
+        var res = (new Axi4Request(AXI_Config.s_id_width, AXI_Config.addr_width, AXI_Config.data_width)).Lit(
+           _.addr -> addr.U,
+            _.burst -> 0.U, // burst mode : FIXED
+            _.cache -> 0.U,
+            _.id    -> 1.U, // avoid using zero
+            _.len   -> 0.U, // one beat for burst
+            _.lock  -> 0.U,
+            _.prot  -> 0.U,
+            _.qos   -> 0.U,
+            _.region -> 0.U,
+            _.size  -> "b010".U // 4 bytes for one beats
+        )
+        if (Constants.DEBUG)
+            println(s"[DEBUG] the generated writeResp signals : ${res}")
+        res
+    }
 
-//     def genAXIwSignals(wdata: BigInt): Axi4WriteData = {
-//         var res = (new Axi4WriteData(Config.data_width)).Lit(
-//             _.data -> wdata.U,
-//             _.strb -> "h0F".U,
-//             _.last   -> true.B,
-//         )
-//         println(s"[DEBUG] the generated w signals : ${res}")
-//         res
-//     }
+    def genAXIrSignals(rdata: BigInt): Axi4ReadData = {
+        var res = (new Axi4ReadData(AXI_Config.s_id_width, AXI_Config.data_width)).Lit(
+            _.id -> 1.U, // avoid using zero id
+            _.data -> rdata.U,
+            _.resp -> 0.U,
+            _.last -> true.B,
+        )
+        if (Constants.DEBUG)
+            println(s"[DEBUG] the generated r signals : ${res}")
+        res
+    }
 
-//     def genAXIarSignals(addr: BigInt): Axi4Request = {
-//         var res = (new Axi4Request(Config.s_id_width, Config.addr_width, Config.data_width)).Lit(
-//            _.addr -> addr.U,
-//             _.burst -> 0.U, // burst mode : FIXED
-//             _.cache -> 0.U,
-//             _.id    -> 1.U, // avoid using zero
-//             _.len   -> 0.U, // one beat for burst
-//             _.lock  -> 0.U,
-//             _.prot  -> 0.U,
-//             _.qos   -> 0.U,
-//             _.region -> 0.U,
-//             _.size  -> "b010".U // 4 bytes for one beats
-//         )
-//         println(s"[DEBUG] the generated ar signals : ${res}")
-//         res
-//     }
+    def genAXIarNull(): Axi4Request = {
+        var res = (new Axi4Request(AXI_Config.s_id_width, AXI_Config.addr_width, AXI_Config.data_width)).Lit(
+           _.addr -> 0.U,
+            _.burst -> 0.U, // burst mode : FIXED
+            _.cache -> 0.U,
+            _.id    -> 0.U, // avoid using zero
+            _.len   -> 0.U, // one beat for burst
+            _.lock  -> 0.U,
+            _.prot  -> 0.U,
+            _.qos   -> 0.U,
+            _.region -> 0.U,
+            _.size  -> 0.U // 4 bytes for one beats
+        )
+        if (Constants.DEBUG)
+            println(s"[DEBUG] the generated writeResp signals : ${res}")
+        res
+    }
 
-//     def genAXIrSignals(rdata: BigInt): Axi4ReadData = {
-//         var res = (new Axi4ReadData(Config.s_id_width, Config.data_width)).Lit(
-//             _.id -> 1.U, // avoid using zero id
-//             _.data -> rdata.U,
-//             _.resp -> 0.U,
-//             _.last -> true.B,
-//         )
-//         println(s"[DEBUG] the generated r signals : ${res}")
-//         res
-//     }
+    "master" should "read data from each slave according to addr" in {
+        test(new AXIReadBus(
+            AXI_Config.slave_num,
+            AXI_Config.s_id_width,
+            AXI_Config.addr_width,
+            AXI_Config.data_width,
+            AXI_Config.addr_map
+        )).withAnnotations(Seq(
+            WriteVcdAnnotation,
+        )){ dut =>
+            /* Initialize IO ports */
+            //* master
+            for (i <- 0 until AXI_Config.master_num) {
+                // input port
+                dut.io.master.readAddr.initSource().setSourceClock(dut.clock)
 
-//     def genAXIbSignals(): Axi4WriteResp = {
-//         var res = (new Axi4WriteResp(Config.s_id_width)).Lit(
-//             _.id -> 1.U,
-//             _.resp -> 0.U
-//         )
-//         res
-//     }
-  
-//     def resetSignals(): 
+                // output ports
+                dut.io.master.readData.initSink().setSinkClock(dut.clock)
+            }
+            //* slave
+            for (i <- 0 until AXI_Config.slave_num) {
+                // input port
+                dut.io.slave(i).readData.initSource().setSourceClock(dut.clock)
 
-//     "Masters" should "send/read data to each Slaves according to addr" in {
-//         test(new AXILiteXBar(
-//             Config.master_num,
-//             Config.slave_num,
-//             Config.s_id_width,
-//             Config.addr_width,
-//             Config.data_width,
-//             Config.addr_map
-//         )).withAnnotations(Seq(
-//             WriteVcdAnnotation,
-//         )){ dut =>
-//             /* Initialize IO ports */
-//             //* masters
-//             for (i <- 0 until Config.master_num) {
-//                 // input port
-//                 dut.io.masters(i).r.initSink().setSourceClock(dut.clock)
-//                 dut.io.masters(i).b.initSink().setSourceClock(dut.clock)
+                // output ports
+                dut.io.slave(i).readAddr.initSink().setSinkClock(dut.clock)
+            }
 
-//                 // output ports
-//                 dut.io.masters(i).ar.initSource().setSinkClock(dut.clock)
-//                 dut.io.masters(i).aw.initSource().setSinkClock(dut.clock)
-//                 dut.io.masters(i).w.initSource().setSinkClock(dut.clock)
-//             }
-//             //* slaves
-//             for (i <- 0 until Config.slave_num) {
-//                 // input port
-//                 dut.io.slaves(i).ar.initSource().setSourceClock(dut.clock)
-//                 dut.io.slaves(i).aw.initSource().setSourceClock(dut.clock)
-//                 dut.io.slaves(i).w.initSource().setSourceClock(dut.clock)
+            fork{
+                dut.io.slave(0).readAddr.expectDequeue(genAXIarSignals(BigInt("9000", 16)))
+                dut.io.slave(0).readAddr.expectDequeue(genAXIarSignals(BigInt("9008", 16)))
+            }.fork{
+                dut.io.slave(1).readAddr.expectDequeue(genAXIarSignals(BigInt("19000", 16)))
+                dut.io.slave(1).readAddr.expectDequeue(genAXIarSignals(BigInt("19008", 16)))
+            }.fork{
+                dut.io.master.readData.expectDequeue(genAXIrSignals(BigInt("00010203", 16)))
+                dut.io.master.readData.expectDequeue(genAXIrSignals(BigInt("04050607", 16)))
+                dut.io.master.readData.expectDequeue(genAXIrSignals(BigInt("08090a0b", 16)))
+                dut.io.master.readData.expectDequeue(genAXIrSignals(BigInt("0c0d0e0f", 16)))
+            }.fork{
+                dut.io.slave(0).readData.enqueue(genAXIrSignals(BigInt("00010203", 16)))
+                dut.io.slave(0).readData.enqueue(genAXIrSignals(BigInt("04050607", 16)))
+            }.fork{
+                dut.io.slave(1).readData.enqueue(genAXIrSignals(BigInt("08090a0b", 16)))
+                dut.io.slave(1).readData.enqueue(genAXIrSignals(BigInt("0c0d0e0f", 16)))
+            }.fork{
+                dut.io.master.readAddr.enqueue(genAXIarSignals(BigInt("9000", 16)))
+                dut.io.master.readAddr.enqueue(genAXIarSignals(BigInt("9008", 16)))
+                dut.io.master.readAddr.enqueue(genAXIarSignals(BigInt("19000", 16)))
+                dut.io.master.readAddr.enqueue(genAXIarSignals(BigInt("19008", 16)))
+            }.join()
+            dut.clock.step(2)
 
-//                 // output ports
-//                 dut.io.slaves(i).r.initSink().setSinkClock(dut.clock)
-//                 dut.io.slaves(i).b.initSink().setSinkClock(dut.clock)
-//             }
-//         }
-    
-//     dut.io.masters(0).aw.enqueue(genAXIawSignals(BigInt("9000", 16)))
-//     dut.io.masters(0).w.enqueue(genAXIwSignals(BigInt("01020304", 16)))
-//     dut.io.masters(0).ar.enqueue(genAXIarSignals(BigInt("9008", 16)))
-//     dut.clock.step(2)
+//   poke(dut.io.master(0).readAddr.valid, true)
+//   poke(dut.io.master(0).readAddr.bits.addr, 0x9000)
+//   poke(dut.io.master(0).readData.valid, true)
+//   poke(dut.io.master(0).readData.bits.data, 1)
+//   poke(dut.io.master(0).readData.bits.strb, 0xf)
+//   poke(dut.io.master(0).writeResp.ready, true)
+//   poke(dut.io.master(0).readAddr.valid, true)
+//   poke(dut.io.master(0).readAddr.bits.addr, 0x9008)
+//   poke(dut.io.master(0).readData.ready, true)
 
-
-
-//   poke(dut.io.masters(0).writeAddr.valid, true)
-//   poke(dut.io.masters(0).writeAddr.bits.addr, 0x9000)
-//   poke(dut.io.masters(0).writeData.valid, true)
-//   poke(dut.io.masters(0).writeData.bits.data, 1)
-//   poke(dut.io.masters(0).writeData.bits.strb, 0xf)
-//   poke(dut.io.masters(0).writeResp.ready, true)
-//   poke(dut.io.masters(0).readAddr.valid, true)
-//   poke(dut.io.masters(0).readAddr.bits.addr, 0x9008)
-//   poke(dut.io.masters(0).readData.ready, true)
-
-//   poke(dut.io.slaves(0).writeAddr.ready, true)
-//   poke(dut.io.slaves(0).writeData.ready, true)
-//   poke(dut.io.slaves(0).readAddr.ready, true)
-//   poke(dut.io.slaves(0).readData.valid, true)
-//   poke(dut.io.slaves(0).readData.bits.data, 1)
-//   poke(dut.io.slaves(0).writeResp.valid, true)
-//   poke(dut.io.slaves(0).writeResp.bits, 0)
+//   poke(dut.io.slave(0).readAddr.ready, true)
+//   poke(dut.io.slave(0).readData.ready, true)
+//   poke(dut.io.slave(0).readAddr.ready, true)
+//   poke(dut.io.slave(0).readData.valid, true)
+//   poke(dut.io.slave(0).readData.bits.data, 1)
+//   poke(dut.io.slave(0).writeResp.valid, true)
+//   poke(dut.io.slave(0).writeResp.bits, 0)
 
 
 //   step(2)
 
-//   poke(dut.io.masters(0).writeAddr.valid, true)
-//   poke(dut.io.masters(0).writeAddr.bits.addr, 0x19000)
-//   poke(dut.io.masters(0).writeData.valid, true)
-//   poke(dut.io.masters(0).writeData.bits.data, 1)
-//   poke(dut.io.masters(0).writeData.bits.strb, 0xf)
-//   poke(dut.io.masters(0).writeResp.ready, true)
-//   poke(dut.io.masters(0).readAddr.valid, true)
-//   poke(dut.io.masters(0).readAddr.bits.addr, 0x19008)
-//   poke(dut.io.masters(0).readData.ready, true)
+//   poke(dut.io.master(0).readAddr.valid, true)
+//   poke(dut.io.master(0).readAddr.bits.addr, 0x19000)
+//   poke(dut.io.master(0).readData.valid, true)
+//   poke(dut.io.master(0).readData.bits.data, 1)
+//   poke(dut.io.master(0).readData.bits.strb, 0xf)
+//   poke(dut.io.master(0).writeResp.ready, true)
+//   poke(dut.io.master(0).readAddr.valid, true)
+//   poke(dut.io.master(0).readAddr.bits.addr, 0x19008)
+//   poke(dut.io.master(0).readData.ready, true)
 
-//   poke(dut.io.slaves(1).writeAddr.ready, true)
-//   poke(dut.io.slaves(1).writeData.ready, true)
-//   poke(dut.io.slaves(1).readAddr.ready, true)
-//   poke(dut.io.slaves(1).readData.valid, true)
-//   poke(dut.io.slaves(1).readData.bits.data, 2)
-//   poke(dut.io.slaves(1).writeResp.valid, true)
-//   poke(dut.io.slaves(1).writeResp.bits, 0)
+//   poke(dut.io.slave(1).readAddr.ready, true)
+//   poke(dut.io.slave(1).readData.ready, true)
+//   poke(dut.io.slave(1).readAddr.ready, true)
+//   poke(dut.io.slave(1).readData.valid, true)
+//   poke(dut.io.slave(1).readData.bits.data, 2)
+//   poke(dut.io.slave(1).writeResp.valid, true)
+//   poke(dut.io.slave(1).writeResp.bits, 0)
 
-//   poke(dut.io.slaves(0).writeAddr.ready, false)
-//   poke(dut.io.slaves(0).writeData.ready, false)
-//   poke(dut.io.slaves(0).readAddr.ready, false)
-//   poke(dut.io.slaves(0).readData.valid, false)
-//   poke(dut.io.slaves(0).readData.bits.data, 1)
-//   poke(dut.io.slaves(0).writeResp.valid, false)
-//   poke(dut.io.slaves(0).writeResp.bits, 0)
+//   poke(dut.io.slave(0).readAddr.ready, false)
+//   poke(dut.io.slave(0).readData.ready, false)
+//   poke(dut.io.slave(0).readAddr.ready, false)
+//   poke(dut.io.slave(0).readData.valid, false)
+//   poke(dut.io.slave(0).readData.bits.data, 1)
+//   poke(dut.io.slave(0).writeResp.valid, false)
+//   poke(dut.io.slave(0).writeResp.bits, 0)
 
 //   step(2)
 
-//   poke(dut.io.masters(1).writeAddr.valid, true)
-//   poke(dut.io.masters(1).writeAddr.bits.addr, 0x19000)
-//   poke(dut.io.masters(1).writeData.valid, true)
-//   poke(dut.io.masters(1).writeData.bits.data, 1)
-//   poke(dut.io.masters(1).writeData.bits.strb, 0xf)
-//   poke(dut.io.masters(1).writeResp.ready, true)
-//   poke(dut.io.masters(1).readAddr.valid, true)
-//   poke(dut.io.masters(1).readAddr.bits.addr, 0x19008)
-//   poke(dut.io.masters(1).readData.ready, true)
+//   poke(dut.io.master(1).readAddr.valid, true)
+//   poke(dut.io.master(1).readAddr.bits.addr, 0x19000)
+//   poke(dut.io.master(1).readData.valid, true)
+//   poke(dut.io.master(1).readData.bits.data, 1)
+//   poke(dut.io.master(1).readData.bits.strb, 0xf)
+//   poke(dut.io.master(1).writeResp.ready, true)
+//   poke(dut.io.master(1).readAddr.valid, true)
+//   poke(dut.io.master(1).readAddr.bits.addr, 0x19008)
+//   poke(dut.io.master(1).readData.ready, true)
 
-//   poke(dut.io.slaves(1).writeAddr.ready, true)
-//   poke(dut.io.slaves(1).writeData.ready, true)
-//   poke(dut.io.slaves(1).readAddr.ready, true)
-//   poke(dut.io.slaves(1).readData.valid, true)
-//   poke(dut.io.slaves(1).readData.bits.data, 2)
-//   poke(dut.io.slaves(1).writeResp.valid, true)
-//   poke(dut.io.slaves(1).writeResp.bits, 0)
+//   poke(dut.io.slave(1).readAddr.ready, true)
+//   poke(dut.io.slave(1).readData.ready, true)
+//   poke(dut.io.slave(1).readAddr.ready, true)
+//   poke(dut.io.slave(1).readData.valid, true)
+//   poke(dut.io.slave(1).readData.bits.data, 2)
+//   poke(dut.io.slave(1).writeResp.valid, true)
+//   poke(dut.io.slave(1).writeResp.bits, 0)
 
 //   step(4)
 
-//     println("[DEBUG] END TEST ")
-//     }
-// }
+        println("[DEBUG] END TEST ")
+        }
+    }
+}

@@ -1,4 +1,4 @@
-// package acal_lab14.AXILite
+package acal_lab14.AXILite
 
 import chisel3._
 import chiseltest._
@@ -8,14 +8,16 @@ import chiseltest.ChiselScalatestTester
 import chiseltest.simulator.WriteVcdAnnotation
 import chisel3.experimental.BundleLiterals._
 
-import AXI._
+import acal_lab14.AXI._
+import Config._
+
 // allocation of 2 slaves in memory space
 
 
-class AXIWriteReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
+class AXISlaveWriteMuxTest extends AnyFlatSpec with ChiselScalatestTester{
     // Functions for generating test vectors
      def genAXIawSignals(addr: BigInt): Axi4Request = {
-        var res = (new Axi4Request(Config.s_id_width, Config.addr_width, Config.data_width)).Lit(
+        var res = (new Axi4Request(AXI_Config.s_id_width, AXI_Config.addr_width, AXI_Config.data_width)).Lit(
             _.addr -> addr.U,
             _.burst -> 0.U, // Burst mode : FIXED
             _.cache -> 0.U,
@@ -33,7 +35,7 @@ class AXIWriteReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
     }
 
     def genAXIwSignals(wdata: BigInt): Axi4WriteData = {
-        var res = (new Axi4WriteData(Config.data_width)).Lit(
+        var res = (new Axi4WriteData(AXI_Config.data_width)).Lit(
             _.data -> wdata.U,
             _.strb -> "h0F".U,
             _.last   -> true.B,
@@ -44,7 +46,7 @@ class AXIWriteReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
     }
 
     def genAXIbSignals(): Axi4WriteResp = {
-        var res = (new Axi4WriteResp(Config.s_id_width)).Lit(
+        var res = (new Axi4WriteResp(AXI_Config.s_id_width)).Lit(
             _.id -> 1.U,
             _.resp -> 0.U
         )
@@ -55,15 +57,15 @@ class AXIWriteReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
 
     "WriteReadMux" should "Write addr to bus & Write data to slave device" in {
         test(new AXISlaveWriteMux(
-            Config.master_num,
-            Config.s_id_width,
-            Config.addr_width,
-            Config.data_width,
+            AXI_Config.master_num,
+            AXI_Config.s_id_width,
+            AXI_Config.addr_width,
+            AXI_Config.data_width,
         )).withAnnotations(Seq(
             WriteVcdAnnotation,
         )){ dut =>
             /* Initialize IO ports */
-            for (i <- 0 until Config.master_num) {
+            for (i <- 0 until AXI_Config.master_num) {
                 // input port
                 dut.io.in(i).writeAddr.initSource().setSourceClock(dut.clock)
                 dut.io.in(i).writeData.initSource().setSourceClock(dut.clock)

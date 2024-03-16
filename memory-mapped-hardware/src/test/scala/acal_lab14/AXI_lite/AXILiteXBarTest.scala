@@ -1,29 +1,134 @@
 // package acal_lab14.AXILite
 
 // import chisel3._
-// import chisel3.iotesters.{Driver, PeekPokeTester}
-// import acal_lab14.AXI._
-// class AXILiteXBarTest(dut: AXILiteXBar) extends PeekPokeTester(dut) {
-//   for (i <- 0 until 2) {
-//     poke(dut.io.masters(i).writeAddr.valid, false)
-//     poke(dut.io.masters(i).writeAddr.bits.addr, 0)
-//     poke(dut.io.masters(i).writeData.valid, false)
-//     poke(dut.io.masters(i).writeData.bits.data, 0)
-//     poke(dut.io.masters(i).writeData.bits.strb, 0xf)
-//     poke(dut.io.masters(i).writeResp.ready, false)
-//     poke(dut.io.masters(i).readAddr.valid, false)
-//     poke(dut.io.masters(i).readAddr.bits.addr, 1)
-//     poke(dut.io.masters(i).readData.ready, false)
+// import chiseltest._
+// import org.scalatest.flatspec.AnyFlatSpec
+// import chiseltest.ChiselScalatestTester
 
-//     poke(dut.io.slaves(i).writeAddr.ready, false)
-//     poke(dut.io.slaves(i).writeData.ready, false)
-//     poke(dut.io.slaves(i).readAddr.ready, false)
-//     poke(dut.io.slaves(i).readData.valid, false)
-//     poke(dut.io.slaves(i).readData.bits.data, 0)
-//     poke(dut.io.slaves(i).writeResp.valid, false)
-//     poke(dut.io.slaves(i).writeResp.bits, 0)
-//     poke(dut.io.slaves(i).writeData.bits.strb, 0xf)
-//   }
+// import chiseltest.simulator.WriteVcdAnnotation
+// import chisel3.experimental.BundleLiterals._
+
+// import acal_lab14.AXI._
+
+// object Config {
+//     val master_num = 2,     // number of masters
+//     val slave_num = 2,      // number of slaves
+//     val s_id_width = 17
+//     val addr_width = 32,
+//     val data_width = 32
+//     val addr_map = List(("h8000".U, "h10000".U), ("h10000".U, "h20000".U))
+// }
+
+// // allocation of 2 slaves in memory space
+
+
+// class AXILiteXBarTest extends AnyFlatSpec with ChiselScalatestTester{
+//       // Functions for generating test vectors
+//     def genAXIawSignals(addr: BigInt): Axi4Request = {
+//         var res = (new Axi4Request(Config.s_id_width, Config.addr_width, Config.data_width)).Lit(
+//             _.addr -> addr.U,
+//             _.burst -> 0.U, // Burst mode : FIXED
+//             _.cache -> 0.U,
+//             _.id    -> 1.U, // Avoid using zero id
+//             _.len   -> 0.U, // one beat in a burst
+//             _.lock  -> 0.U,
+//             _.prot  -> 0.U,
+//             _.qos   -> 0.U,
+//             _.region -> 0.U,
+//             _.size  -> "b010".U // 4 bytes per beat
+//         )
+//         println(s"[DEBUG] the generated aw signals : ${res}")
+//         res
+//     }
+
+//     def genAXIwSignals(wdata: BigInt): Axi4WriteData = {
+//         var res = (new Axi4WriteData(Config.data_width)).Lit(
+//             _.data -> wdata.U,
+//             _.strb -> "h0F".U,
+//             _.last   -> true.B,
+//         )
+//         println(s"[DEBUG] the generated w signals : ${res}")
+//         res
+//     }
+
+//     def genAXIarSignals(addr: BigInt): Axi4Request = {
+//         var res = (new Axi4Request(Config.s_id_width, Config.addr_width, Config.data_width)).Lit(
+//            _.addr -> addr.U,
+//             _.burst -> 0.U, // burst mode : FIXED
+//             _.cache -> 0.U,
+//             _.id    -> 1.U, // avoid using zero
+//             _.len   -> 0.U, // one beat for burst
+//             _.lock  -> 0.U,
+//             _.prot  -> 0.U,
+//             _.qos   -> 0.U,
+//             _.region -> 0.U,
+//             _.size  -> "b010".U // 4 bytes for one beats
+//         )
+//         println(s"[DEBUG] the generated ar signals : ${res}")
+//         res
+//     }
+
+//     def genAXIrSignals(rdata: BigInt): Axi4ReadData = {
+//         var res = (new Axi4ReadData(Config.s_id_width, Config.data_width)).Lit(
+//             _.id -> 1.U, // avoid using zero id
+//             _.data -> rdata.U,
+//             _.resp -> 0.U,
+//             _.last -> true.B,
+//         )
+//         println(s"[DEBUG] the generated r signals : ${res}")
+//         res
+//     }
+
+//     def genAXIbSignals(): Axi4WriteResp = {
+//         var res = (new Axi4WriteResp(Config.s_id_width)).Lit(
+//             _.id -> 1.U,
+//             _.resp -> 0.U
+//         )
+//         res
+//     }
+  
+//     "Masters" should "send/read data to each Slaves according to addr" in {
+//         test(new AXILiteXBar(
+//             Config.master_num,
+//             Config.slave_num,
+//             Config.s_id_width,
+//             Config.addr_width,
+//             Config.data_width,
+//             Config.addr_map
+//         )).withAnnotations(Seq(
+//             WriteVcdAnnotation,
+//         )){ dut =>
+//             /* Initialize IO ports */
+//             //* masters
+//             for (i <- 0 until Config.master_num) {
+//                 // input port
+//                 dut.io.masters(i).r.initSink().setSourceClock(dut.clock)
+//                 dut.io.masters(i).b.initSink().setSourceClock(dut.clock)
+
+//                 // output ports
+//                 dut.io.masters(i).ar.initSource().setSinkClock(dut.clock)
+//                 dut.io.masters(i).aw.initSource().setSinkClock(dut.clock)
+//                 dut.io.masters(i).w.initSource().setSinkClock(dut.clock)
+//             }
+//             //* slaves
+//             for (i <- 0 until Config.slave_num) {
+//                 // input port
+//                 dut.io.slaves(i).ar.initSource().setSourceClock(dut.clock)
+//                 dut.io.slaves(i).aw.initSource().setSourceClock(dut.clock)
+//                 dut.io.slaves(i).w.initSource().setSourceClock(dut.clock)
+
+//                 // output ports
+//                 dut.io.slaves(i).r.initSink().setSinkClock(dut.clock)
+//                 dut.io.slaves(i).b.initSink().setSinkClock(dut.clock)
+//             }
+//         }
+    
+//     dut.io.masters(0).aw.enqueue(genAXIawSignals(BigInt("9000", 16)))
+//     dut.io.masters(0).w.enqueue(genAXIwSignals(BigInt("01020304", 16)))
+//     dut.io.masters(0).ar.enqueue(genAXIarSignals(BigInt("9008", 16)))
+//     dut.clock.step(2)
+
+
 
 //   poke(dut.io.masters(0).writeAddr.valid, true)
 //   poke(dut.io.masters(0).writeAddr.bits.addr, 0x9000)
@@ -42,6 +147,7 @@
 //   poke(dut.io.slaves(0).readData.bits.data, 1)
 //   poke(dut.io.slaves(0).writeResp.valid, true)
 //   poke(dut.io.slaves(0).writeResp.bits, 0)
+
 
 //   step(2)
 
@@ -93,13 +199,6 @@
 
 //   step(4)
 
-// }
-
-// object AXILiteXBarTest extends App {
-//   // allocation of 2 slaves in memory space
-//   val addr_map = Seq((0x8000, 0x8000), (0x100000, 0x100000))
-
-//   Driver.execute(args, () => new AXILiteXBar(2, 2, 32, 64, addr_map)) { c =>
-//     new AXILiteXBarTest(c)
-//   }
+//     println("[DEBUG] END TEST ")
+//     }
 // }

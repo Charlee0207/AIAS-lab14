@@ -9,6 +9,7 @@ import chiseltest.simulator.WriteVcdAnnotation
 import chisel3.experimental.BundleLiterals._
 
 import acal_lab14.AXI._
+import Config._
 
 // allocation of 2 slaves in memory space
 
@@ -16,7 +17,7 @@ import acal_lab14.AXI._
 class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
     // Functions for generating test vectors
     def genAXIarSignals(addr: BigInt): Axi4Request = {
-        var res = (new Axi4Request(Config.s_id_width, Config.addr_width, Config.data_width)).Lit(
+        var res = (new Axi4Request(AXI_Config.s_id_width, AXI_Config.addr_width, AXI_Config.data_width)).Lit(
            _.addr -> addr.U,
             _.burst -> 0.U, // burst mode : FIXED
             _.cache -> 0.U,
@@ -34,7 +35,7 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
     }
 
     def genAXIrSignals(rdata: BigInt): Axi4ReadData = {
-        var res = (new Axi4ReadData(Config.s_id_width, Config.data_width)).Lit(
+        var res = (new Axi4ReadData(AXI_Config.s_id_width, AXI_Config.data_width)).Lit(
             _.id -> 1.U, // avoid using zero id
             _.data -> rdata.U,
             _.resp -> 0.U,
@@ -47,15 +48,15 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
 
     "SlaveReadMux" should "Read addr from bus & Read data from slave device" in {
         test(new AXISlaveReadMux(
-            Config.master_num,
-            Config.s_id_width,
-            Config.addr_width,
-            Config.data_width,
+            AXI_Config.master_num,
+            AXI_Config.s_id_width,
+            AXI_Config.addr_width,
+            AXI_Config.data_width,
         )).withAnnotations(Seq(
             WriteVcdAnnotation,
         )){ dut =>
             /* Initialize IO ports */
-            for (i <- 0 until Config.master_num) {
+            for (i <- 0 until AXI_Config.master_num) {
                 // input port
                 dut.io.in(i).readAddr.initSource().setSourceClock(dut.clock)
 

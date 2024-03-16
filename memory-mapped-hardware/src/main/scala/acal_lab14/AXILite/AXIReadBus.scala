@@ -33,10 +33,10 @@ class AXIReadBus(val mSlaves: Int, val idWidth: Int, val addrWidth: Int, val dat
   for (i <- 0 until mSlaves) {
     io.slave(i).readAddr.valid := false.B
     io.slave(i).readAddr.bits.addr := 0.U
-    io.slave(i).readAddr.bits.id := DontCare
+    io.slave(i).readAddr.bits.id := 0.U
     io.slave(i).readAddr.bits.region := DontCare
     io.slave(i).readAddr.bits.len := DontCare
-    io.slave(i).readAddr.bits.size := DontCare
+    io.slave(i).readAddr.bits.size := 0.U
     io.slave(i).readAddr.bits.burst := DontCare
     io.slave(i).readAddr.bits.lock := DontCare
     io.slave(i).readAddr.bits.cache := DontCare
@@ -49,7 +49,7 @@ class AXIReadBus(val mSlaves: Int, val idWidth: Int, val addrWidth: Int, val dat
   io.master.readData.bits.data := 0.U
   io.master.readData.bits.resp := 0.U
   io.master.readData.bits.id := DontCare
-  io.master.readData.bits.last := DontCare
+  io.master.readData.bits.last := 0.U
   io.master.readAddr.ready := ~outstanding
 
   when(io.master.readAddr.fire) {
@@ -69,9 +69,13 @@ class AXIReadBus(val mSlaves: Int, val idWidth: Int, val addrWidth: Int, val dat
     io.master.readData.valid := io.slave(read_port_reg).readData.valid
     io.master.readData.bits.data := io.slave(read_port_reg).readData.bits.data
     io.master.readData.bits.resp := io.slave(read_port_reg).readData.bits.resp
+    io.master.readData.bits.last := io.slave(read_port_reg).readData.bits.last
+    io.master.readData.bits.id := io.slave(read_port_reg).readData.bits.id
     io.slave(read_port_reg).readAddr.bits.addr := read_addr_reg
     io.slave(read_port_reg).readAddr.valid := read_addr_reg_valid
     io.slave(read_port_reg).readData.ready := io.master.readData.ready
+    io.slave(read_port_reg).readAddr.bits.size := io.master.readAddr.bits.size
+    io.slave(read_port_reg).readAddr.bits.id := io.master.readAddr.bits.id
     when(io.master.readData.fire) {
       outstanding := false.B
     }

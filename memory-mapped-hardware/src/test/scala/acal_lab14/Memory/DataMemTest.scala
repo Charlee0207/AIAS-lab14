@@ -9,15 +9,7 @@ import chiseltest.simulator.WriteVcdAnnotation
 import chisel3.experimental.BundleLiterals._
 
 import acal_lab14.AXI._
-
-object Mem_config {
-    val s_id_width = 17
-    val size = 10
-    val addr_width = 32
-    val data_width = 32
-    val memory_file = "../../../resources/data.hex"
-}
-
+import Config._
 
 class DataMemTest extends AnyFlatSpec with ChiselScalatestTester{
 
@@ -35,7 +27,8 @@ class DataMemTest extends AnyFlatSpec with ChiselScalatestTester{
             _.region -> 0.U,
             _.size  -> "b010".U // 4 bytes per beat
         )
-        println(s"[DEBUG] the generated aw signals : ${res}")
+        if(Constants.DEBUG)
+            println(s"[DEBUG] the generated aw signals : ${res}")
         res
     }
 
@@ -45,7 +38,8 @@ class DataMemTest extends AnyFlatSpec with ChiselScalatestTester{
             _.strb -> "h0F".U,
             _.last   -> true.B,
         )
-        println(s"[DEBUG] the generated w signals : ${res}")
+        if(Constants.DEBUG)
+            println(s"[DEBUG] the generated w signals : ${res}")
         res
     }
 
@@ -62,7 +56,8 @@ class DataMemTest extends AnyFlatSpec with ChiselScalatestTester{
             _.region -> 0.U,
             _.size  -> "b010".U // 4 bytes for one beats
         )
-        println(s"[DEBUG] the generated ar signals : ${res}")
+        if(Constants.DEBUG)
+            println(s"[DEBUG] the generated ar signals : ${res}")
         res
     }
 
@@ -73,7 +68,8 @@ class DataMemTest extends AnyFlatSpec with ChiselScalatestTester{
             _.resp -> 0.U,
             _.last -> true.B,
         )
-        println(s"[DEBUG] the generated r signals : ${res}")
+        if(Constants.DEBUG)
+            println(s"[DEBUG] the generated r signals : ${res}")
         res
     }
 
