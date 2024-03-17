@@ -53,7 +53,7 @@ class AXIWriteBusTest extends AnyFlatSpec with ChiselScalatestTester{
         res
     }
 
-    "master" should "write data to each slave according to addr" in {
+    "Master" should "Write data to each slave according to different address" in {
         test(new AXIWriteBus(
             AXI_Config.slave_num,
             AXI_Config.s_id_width,
@@ -83,95 +83,51 @@ class AXIWriteBusTest extends AnyFlatSpec with ChiselScalatestTester{
                 dut.io.slave(i).writeData.initSink().setSinkClock(dut.clock)
             }
 
-            dut.io.slave(0).writeAddr.expectDequeue(genAXIawSignals(BigInt("9000", 16)))
-            dut.io.slave(0).writeData.expectDequeue(genAXIwSignals(BigInt("01020304", 16)))
-            dut.io.slave(0).writeResp.expectDequeue(genAXIbSignals())
-            dut.io.slave(1).writeAddr.expectDequeue(genAXIawSignals(BigInt("0", 16)))
-            dut.io.slave(1).writeData.expectDequeue(genAXIwSignals(BigInt("0", 16)))
-            dut.io.master.writeAddr.enqueue(genAXIawSignals(BigInt("9000", 16)))
-            dut.io.master.writeData.enqueue(genAXIwSignals(BigInt("01020304", 16)))
-            dut.io.master.writeResp.enqueue(genAXIbSignals())
-            dut.clock.step(2)
-
-            dut.io.slave(0).writeAddr.expectDequeue(genAXIawSignals(BigInt("0", 16)))
-            dut.io.slave(0).writeData.expectDequeue(genAXIwSignals(BigInt("0", 16))) 
-            dut.io.slave(1).writeAddr.expectDequeue(genAXIawSignals(BigInt("19000", 16)))
-            dut.io.slave(1).writeData.expectDequeue(genAXIwSignals(BigInt("0a0b0c0d", 16)))
-            dut.io.slave(1).writeResp.expectDequeue(genAXIbSignals())
-            dut.io.master.writeAddr.enqueue(genAXIawSignals(BigInt("19000", 16)))
-            dut.io.master.writeData.enqueue(genAXIwSignals(BigInt("0a0b0c0d", 16)))
-            dut.io.master.writeResp.enqueue(genAXIbSignals())
-
-//   poke(dut.io.master(0).writeAddr.valid, true)
-//   poke(dut.io.master(0).writeAddr.bits.addr, 0x9000)
-//   poke(dut.io.master(0).writeData.valid, true)
-//   poke(dut.io.master(0).writeData.bits.data, 1)
-//   poke(dut.io.master(0).writeData.bits.strb, 0xf)
-//   poke(dut.io.master(0).writeResp.ready, true)
-//   poke(dut.io.master(0).readAddr.valid, true)
-//   poke(dut.io.master(0).readAddr.bits.addr, 0x9008)
-//   poke(dut.io.master(0).readData.ready, true)
-
-//   poke(dut.io.slave(0).writeAddr.ready, true)
-//   poke(dut.io.slave(0).writeData.ready, true)
-//   poke(dut.io.slave(0).readAddr.ready, true)
-//   poke(dut.io.slave(0).readData.valid, true)
-//   poke(dut.io.slave(0).readData.bits.data, 1)
-//   poke(dut.io.slave(0).writeResp.valid, true)
-//   poke(dut.io.slave(0).writeResp.bits, 0)
-
-
-//   step(2)
-
-//   poke(dut.io.master(0).writeAddr.valid, true)
-//   poke(dut.io.master(0).writeAddr.bits.addr, 0x19000)
-//   poke(dut.io.master(0).writeData.valid, true)
-//   poke(dut.io.master(0).writeData.bits.data, 1)
-//   poke(dut.io.master(0).writeData.bits.strb, 0xf)
-//   poke(dut.io.master(0).writeResp.ready, true)
-//   poke(dut.io.master(0).readAddr.valid, true)
-//   poke(dut.io.master(0).readAddr.bits.addr, 0x19008)
-//   poke(dut.io.master(0).readData.ready, true)
-
-//   poke(dut.io.slave(1).writeAddr.ready, true)
-//   poke(dut.io.slave(1).writeData.ready, true)
-//   poke(dut.io.slave(1).readAddr.ready, true)
-//   poke(dut.io.slave(1).readData.valid, true)
-//   poke(dut.io.slave(1).readData.bits.data, 2)
-//   poke(dut.io.slave(1).writeResp.valid, true)
-//   poke(dut.io.slave(1).writeResp.bits, 0)
-
-//   poke(dut.io.slave(0).writeAddr.ready, false)
-//   poke(dut.io.slave(0).writeData.ready, false)
-//   poke(dut.io.slave(0).readAddr.ready, false)
-//   poke(dut.io.slave(0).readData.valid, false)
-//   poke(dut.io.slave(0).readData.bits.data, 1)
-//   poke(dut.io.slave(0).writeResp.valid, false)
-//   poke(dut.io.slave(0).writeResp.bits, 0)
-
-//   step(2)
-
-//   poke(dut.io.master(1).writeAddr.valid, true)
-//   poke(dut.io.master(1).writeAddr.bits.addr, 0x19000)
-//   poke(dut.io.master(1).writeData.valid, true)
-//   poke(dut.io.master(1).writeData.bits.data, 1)
-//   poke(dut.io.master(1).writeData.bits.strb, 0xf)
-//   poke(dut.io.master(1).writeResp.ready, true)
-//   poke(dut.io.master(1).readAddr.valid, true)
-//   poke(dut.io.master(1).readAddr.bits.addr, 0x19008)
-//   poke(dut.io.master(1).readData.ready, true)
-
-//   poke(dut.io.slave(1).writeAddr.ready, true)
-//   poke(dut.io.slave(1).writeData.ready, true)
-//   poke(dut.io.slave(1).readAddr.ready, true)
-//   poke(dut.io.slave(1).readData.valid, true)
-//   poke(dut.io.slave(1).readData.bits.data, 2)
-//   poke(dut.io.slave(1).writeResp.valid, true)
-//   poke(dut.io.slave(1).writeResp.bits, 0)
-
-//   step(4)
-
-        println("[DEBUG] END TEST ")
+            fork{
+                dut.io.slave(0).writeAddr.expectDequeue(genAXIawSignals(BigInt("9000", 16)))
+                dut.io.slave(0).writeAddr.expectDequeue(genAXIawSignals(BigInt("9008", 16)))
+            }.fork{
+                dut.io.slave(1).writeAddr.expectDequeue(genAXIawSignals(BigInt("19000", 16)))
+                dut.io.slave(1).writeAddr.expectDequeue(genAXIawSignals(BigInt("19008", 16)))
+            }.fork{
+                dut.io.slave(0).writeData.expectDequeue(genAXIwSignals(BigInt("00010203", 16)))
+                dut.io.slave(0).writeData.expectDequeue(genAXIwSignals(BigInt("04050607", 16)))
+            }.fork{
+                dut.io.slave(1).writeData.expectDequeue(genAXIwSignals(BigInt("08090a0b", 16)))
+                dut.io.slave(1).writeData.expectDequeue(genAXIwSignals(BigInt("0c0d0e0f", 16)))
+            }.fork{
+                dut.io.master.writeResp.expectDequeue(genAXIbSignals())
+                dut.io.master.writeResp.expectDequeue(genAXIbSignals())
+                dut.io.master.writeResp.expectDequeue(genAXIbSignals())
+                dut.io.master.writeResp.expectDequeue(genAXIbSignals())
+            }.fork{
+                dut.io.master.writeAddr.enqueue(genAXIawSignals(BigInt("9000", 16)))
+                dut.io.master.writeAddr.enqueue(genAXIawSignals(BigInt("9008", 16)))
+                dut.io.master.writeAddr.enqueue(genAXIawSignals(BigInt("19000", 16)))
+                dut.io.master.writeAddr.enqueue(genAXIawSignals(BigInt("19008", 16)))
+            }.fork{
+                dut.io.master.writeData.enqueue(genAXIwSignals(BigInt("00010203", 16)))
+                dut.io.master.writeData.enqueue(genAXIwSignals(BigInt("04050607", 16)))
+                dut.io.master.writeData.enqueue(genAXIwSignals(BigInt("08090a0b", 16)))
+                dut.io.master.writeData.enqueue(genAXIwSignals(BigInt("0c0d0e0f", 16)))
+            }.fork{
+                for(i <- 0 until 2){
+                    fork.withRegion(Monitor){
+                        while(!dut.io.slave(0).writeAddr.valid.peek().litToBoolean || !dut.io.slave(0).writeData.valid.peek().litToBoolean)
+                            dut.clock.step(1)
+                    }.joinAndStep(dut.clock)
+                    dut.io.slave(0).writeResp.enqueue(genAXIbSignals())
+                }
+            }.fork{
+                for(i <- 0 until 2){
+                    fork.withRegion(Monitor){
+                        while(!dut.io.slave(1).writeAddr.valid.peek().litToBoolean || !dut.io.slave(1).writeData.valid.peek().litToBoolean)
+                            dut.clock.step(1)
+                    }.joinAndStep(dut.clock)
+                    dut.io.slave(1).writeResp.enqueue(genAXIbSignals())
+                }
+            }.join()
+            println("----TEST END----")
         }
     }
 }

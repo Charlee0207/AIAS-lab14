@@ -35,22 +35,28 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
   val chosen_reg = RegInit(0.U)
   val w_determined = RegInit(false.B) // true for write data determined
   val aw_determined = RegInit(false.B) // true for write address determined
-  val resp_determined = RegInit(false.B) // true for write resp arrived
 
-  val address_reg = RegInit(0.U(addrWidth.W))
-  val data_reg = RegInit((new Axi4WriteData(dataWidth).Lit(
+  val address_reg = RegInit(new Axi4Request(idWidth, addrWidth, dataWidth).Lit(
+    _.addr -> 0.U,
+    _.id    -> 0.U,
+    _.size  -> 0.U
+  ))
+  val data_reg = RegInit(new Axi4WriteData(dataWidth).Lit(
     _.data -> 0.U,
     _.strb -> 0.U,
     _.last -> false.B, // DontCare in AXILite
-  )))
-  val resp_reg = RegInit(0.U(2.W))
+  ))
+  val resp_reg = RegInit(new Axi4WriteResp(idWidth).Lit(
+    _.id -> 0.U,
+    _.resp -> 0.U,
+  ))
 
   io.out.writeAddr.bits.qos := DontCare
   io.out.writeAddr.bits.len := DontCare
   io.out.writeAddr.bits.cache := DontCare
   io.out.writeAddr.bits.lock := DontCare
-  io.out.writeAddr.bits.size := DontCare
-  io.out.writeAddr.bits.id := DontCare
+  io.out.writeAddr.bits.size := 0.U
+  io.out.writeAddr.bits.id := 0.U
   io.out.writeAddr.bits.prot := DontCare
   io.out.writeAddr.bits.region := DontCare
   io.out.writeAddr.bits.burst := DontCare
@@ -60,7 +66,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
   for (i <- 0 until nMasters) {
     io.in(i).writeData.ready := false.B
     io.in(i).writeResp.valid := false.B
-    io.in(i).writeResp.bits.id := DontCare
+    io.in(i).writeResp.bits.id := 0.U
     io.in(i).writeResp.bits.resp := 0.U
   }
 
@@ -89,7 +95,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
       }
     }
     is(sWaitResp){
-      when(io.in(chosen_reg).writeResp.fire){
+      when(io.out.writeResp.fire){
         state := sReturn
       }
     }
@@ -105,7 +111,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
     when(arbiter.io.out.valid){
     io.in(arbiter.io.chosen).writeData.ready := true.B
       chosen_reg := arbiter.io.chosen
-      address_reg := io.in(arbiter.io.chosen).writeAddr.bits.addr
+      address_reg <> io.in(arbiter.io.chosen).writeAddr.bits
       aw_determined := true.B
       when(io.in(arbiter.io.chosen.asUInt).writeData.fire){
         data_reg <> io.in(arbiter.io.chosen.asUInt).writeData.bits
@@ -134,7 +140,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
         w_determined := false.B
       }
       when(io.out.writeResp.fire){
-        resp_reg := io.out.writeResp.bits.resp
+        resp_reg <> io.out.writeResp.bits
       }
       io.out.writeResp.ready := true.B
   }
@@ -142,8 +148,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
     io.in(chosen_reg).writeResp.valid := true.B
   }
 
-
   io.out.writeData.bits <> data_reg
-  io.out.writeAddr.bits.addr := address_reg
-  io.in(chosen_reg).writeResp.bits.resp <> resp_reg
+  io.out.writeAddr.bits <> address_reg
+  io.in(chosen_reg).writeResp.bits <> resp_reg
 }

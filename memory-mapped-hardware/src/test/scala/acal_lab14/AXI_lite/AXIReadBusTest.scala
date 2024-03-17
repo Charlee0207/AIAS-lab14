@@ -64,7 +64,7 @@ class AXIReadBusTest extends AnyFlatSpec with ChiselScalatestTester{
         res
     }
 
-    "master" should "read data from each slave according to addr" in {
+    "Master" should "Read data from each slave according to different address" in {
         test(new AXIReadBus(
             AXI_Config.slave_num,
             AXI_Config.s_id_width,
@@ -116,77 +116,7 @@ class AXIReadBusTest extends AnyFlatSpec with ChiselScalatestTester{
                 dut.io.master.readAddr.enqueue(genAXIarSignals(BigInt("19008", 16)))
             }.join()
             dut.clock.step(2)
-
-//   poke(dut.io.master(0).readAddr.valid, true)
-//   poke(dut.io.master(0).readAddr.bits.addr, 0x9000)
-//   poke(dut.io.master(0).readData.valid, true)
-//   poke(dut.io.master(0).readData.bits.data, 1)
-//   poke(dut.io.master(0).readData.bits.strb, 0xf)
-//   poke(dut.io.master(0).writeResp.ready, true)
-//   poke(dut.io.master(0).readAddr.valid, true)
-//   poke(dut.io.master(0).readAddr.bits.addr, 0x9008)
-//   poke(dut.io.master(0).readData.ready, true)
-
-//   poke(dut.io.slave(0).readAddr.ready, true)
-//   poke(dut.io.slave(0).readData.ready, true)
-//   poke(dut.io.slave(0).readAddr.ready, true)
-//   poke(dut.io.slave(0).readData.valid, true)
-//   poke(dut.io.slave(0).readData.bits.data, 1)
-//   poke(dut.io.slave(0).writeResp.valid, true)
-//   poke(dut.io.slave(0).writeResp.bits, 0)
-
-
-//   step(2)
-
-//   poke(dut.io.master(0).readAddr.valid, true)
-//   poke(dut.io.master(0).readAddr.bits.addr, 0x19000)
-//   poke(dut.io.master(0).readData.valid, true)
-//   poke(dut.io.master(0).readData.bits.data, 1)
-//   poke(dut.io.master(0).readData.bits.strb, 0xf)
-//   poke(dut.io.master(0).writeResp.ready, true)
-//   poke(dut.io.master(0).readAddr.valid, true)
-//   poke(dut.io.master(0).readAddr.bits.addr, 0x19008)
-//   poke(dut.io.master(0).readData.ready, true)
-
-//   poke(dut.io.slave(1).readAddr.ready, true)
-//   poke(dut.io.slave(1).readData.ready, true)
-//   poke(dut.io.slave(1).readAddr.ready, true)
-//   poke(dut.io.slave(1).readData.valid, true)
-//   poke(dut.io.slave(1).readData.bits.data, 2)
-//   poke(dut.io.slave(1).writeResp.valid, true)
-//   poke(dut.io.slave(1).writeResp.bits, 0)
-
-//   poke(dut.io.slave(0).readAddr.ready, false)
-//   poke(dut.io.slave(0).readData.ready, false)
-//   poke(dut.io.slave(0).readAddr.ready, false)
-//   poke(dut.io.slave(0).readData.valid, false)
-//   poke(dut.io.slave(0).readData.bits.data, 1)
-//   poke(dut.io.slave(0).writeResp.valid, false)
-//   poke(dut.io.slave(0).writeResp.bits, 0)
-
-//   step(2)
-
-//   poke(dut.io.master(1).readAddr.valid, true)
-//   poke(dut.io.master(1).readAddr.bits.addr, 0x19000)
-//   poke(dut.io.master(1).readData.valid, true)
-//   poke(dut.io.master(1).readData.bits.data, 1)
-//   poke(dut.io.master(1).readData.bits.strb, 0xf)
-//   poke(dut.io.master(1).writeResp.ready, true)
-//   poke(dut.io.master(1).readAddr.valid, true)
-//   poke(dut.io.master(1).readAddr.bits.addr, 0x19008)
-//   poke(dut.io.master(1).readData.ready, true)
-
-//   poke(dut.io.slave(1).readAddr.ready, true)
-//   poke(dut.io.slave(1).readData.ready, true)
-//   poke(dut.io.slave(1).readAddr.ready, true)
-//   poke(dut.io.slave(1).readData.valid, true)
-//   poke(dut.io.slave(1).readData.bits.data, 2)
-//   poke(dut.io.slave(1).writeResp.valid, true)
-//   poke(dut.io.slave(1).writeResp.bits, 0)
-
-//   step(4)
-
-        println("[DEBUG] END TEST ")
+            println("----TEST END----")
         }
     }
 }

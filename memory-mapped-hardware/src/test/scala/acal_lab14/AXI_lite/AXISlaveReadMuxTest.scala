@@ -46,7 +46,7 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
         res
     }
 
-    "SlaveReadMux" should "Read addr from bus & Read data from slave device" in {
+    "Master" should "Read addr from bus & Read data from slave device" in {
         test(new AXISlaveReadMux(
             AXI_Config.master_num,
             AXI_Config.s_id_width,
@@ -105,6 +105,7 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
             println("[Test 3] Input address from master 1 & 2 at the same time")
             println("[Test 3]: Send address 0xaaaa & 0xcccc from master 0 to slave")
             println("[Test 3]: Send address 0xbbbb & 0xdddd from master 1 to slave")
+            println("[Test 3]: Respond data 0x6666, 0x7777, 0x8888, 0x9999 from slave")
             println("[Test 3]: Observe address read from slave & data read from master")
 
             dut.io.out.readAddr.ready.poke(true.B)

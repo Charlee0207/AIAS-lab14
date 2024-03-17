@@ -25,6 +25,8 @@ class AXIReadBus(val mSlaves: Int, val idWidth: Int, val addrWidth: Int, val dat
   })
   val read_port_reg = RegInit(0.U(addrMap.length.W))
   val read_addr_reg = RegInit(0.U((addrWidth).W))
+  val read_addr_reg_id = RegInit(0.U(idWidth.W))
+  val read_addr_reg_size = RegInit(0.U(3.W))
   val read_addr_reg_valid = RegInit(false.B)
   val outstanding = RegInit(false.B) // outstanding request refers to a data request that has not been resolved or serviced yet
 
@@ -56,6 +58,8 @@ class AXIReadBus(val mSlaves: Int, val idWidth: Int, val addrWidth: Int, val dat
     outstanding := true.B
     read_port_reg := read_port
     read_addr_reg := io.master.readAddr.bits.addr
+    read_addr_reg_id := io.master.readAddr.bits.id
+    read_addr_reg_size := io.master.readAddr.bits.size
     read_addr_reg_valid := true.B
   }
 
@@ -74,8 +78,8 @@ class AXIReadBus(val mSlaves: Int, val idWidth: Int, val addrWidth: Int, val dat
     io.slave(read_port_reg).readAddr.bits.addr := read_addr_reg
     io.slave(read_port_reg).readAddr.valid := read_addr_reg_valid
     io.slave(read_port_reg).readData.ready := io.master.readData.ready
-    io.slave(read_port_reg).readAddr.bits.size := io.master.readAddr.bits.size
-    io.slave(read_port_reg).readAddr.bits.id := io.master.readAddr.bits.id
+    io.slave(read_port_reg).readAddr.bits.size := read_addr_reg_size
+    io.slave(read_port_reg).readAddr.bits.id := read_addr_reg_id
     when(io.master.readData.fire) {
       outstanding := false.B
     }

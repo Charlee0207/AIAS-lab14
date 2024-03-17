@@ -31,7 +31,11 @@ class AXISlaveReadMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, v
   val arbiter = Module(new RRArbiter(Bool(), nMasters))
   val chosen_reg = RegInit(0.U)
   val ar_determined = RegInit(false.B) // true for read address determined
-  val address_reg = RegInit(0.U(addrWidth.W))
+  val address_reg = RegInit(new Axi4Request(idWidth, addrWidth, dataWidth).Lit(
+    _.addr -> 0.U,
+    _.id    -> 0.U,
+    _.size  -> 0.U
+  ))
   val data_reg = RegInit((new Axi4ReadData(idWidth, dataWidth).Lit(
     _.id   -> 0.U,     // DontCare in AXILite
     _.data -> 0.U,
@@ -43,8 +47,8 @@ class AXISlaveReadMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, v
   io.out.readAddr.bits.len := DontCare
   io.out.readAddr.bits.cache := DontCare
   io.out.readAddr.bits.lock := DontCare
-  io.out.readAddr.bits.size := DontCare
-  io.out.readAddr.bits.id := DontCare
+  io.out.readAddr.bits.size := 0.U
+  io.out.readAddr.bits.id := 0.U
   io.out.readAddr.bits.prot := DontCare
   io.out.readAddr.bits.region := DontCare
   io.out.readAddr.bits.burst := DontCare
@@ -55,7 +59,7 @@ class AXISlaveReadMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, v
     io.in(i).readData.bits.data := 0.U
     io.in(i).readData.valid := false.B
     io.in(i).readData.bits.resp := 0.U
-    io.in(i).readData.bits.id := DontCare
+    io.in(i).readData.bits.id := 0.U
     io.in(i).readData.bits.last := true.B
   }
 
@@ -89,7 +93,7 @@ class AXISlaveReadMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, v
     mask.foreach(_ := 1.U)
     when(arbiter.io.out.valid){
       chosen_reg := arbiter.io.chosen
-      address_reg := io.in(arbiter.io.chosen).readAddr.bits.addr
+      address_reg <> io.in(arbiter.io.chosen).readAddr.bits
       ar_determined := true.B
     }
     io.out.readData.ready := false.B
@@ -100,7 +104,7 @@ class AXISlaveReadMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, v
         ar_determined := false.B
       }
       when(io.out.readData.fire){
-        data_reg := io.out.readData.bits
+        data_reg <> io.out.readData.bits
       }
       io.out.readData.ready := true.B
   }
@@ -108,6 +112,6 @@ class AXISlaveReadMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, v
     io.in(chosen_reg).readData.valid := true.B
   }
 
-  io.out.readAddr.bits.addr <> address_reg
+  io.out.readAddr.bits <> address_reg
   io.in(chosen_reg).readData.bits <> data_reg
 }
