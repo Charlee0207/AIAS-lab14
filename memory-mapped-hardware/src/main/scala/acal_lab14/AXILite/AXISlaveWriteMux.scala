@@ -32,7 +32,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
 
 
   val arbiter = Module(new RRArbiter(Bool(), nMasters))
-  val chosen_reg = RegInit(0.U) // synchronous read will return data in the next cycle
+  val chosen_reg = RegInit(0.U)
   val w_determined = RegInit(false.B) // true for write data determined
   val aw_determined = RegInit(false.B) // true for write address determined
   val resp_determined = RegInit(false.B) // true for write resp arrived
@@ -41,7 +41,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
   val data_reg = RegInit((new Axi4WriteData(dataWidth).Lit(
     _.data -> 0.U,
     _.strb -> 0.U,
-    _.last -> false.B,
+    _.last -> false.B, // DontCare in AXILite
   )))
   val resp_reg = RegInit(0.U(2.W))
 
@@ -58,14 +58,14 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
   arbiter.io.out.ready := true.B
 
   for (i <- 0 until nMasters) {
-    io.in(i).writeAddr.ready := true.B
-    io.in(i).writeData.ready := true.B
+    io.in(i).writeData.ready := false.B
     io.in(i).writeResp.valid := false.B
     io.in(i).writeResp.bits.id := DontCare
     io.in(i).writeResp.bits.resp := 0.U
   }
 
   for (i <- 0 until nMasters) {
+    io.in(i).writeAddr.ready := arbiter.io.in(i).ready & mask(i)
     arbiter.io.in(i).valid := io.in(i).writeAddr.valid & mask(i)
     arbiter.io.in(i).bits := false.B  // DontCare
   }
@@ -103,6 +103,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
   when(state === sIdle){
     mask.foreach(_ := 1.U)
     when(arbiter.io.out.valid){
+    io.in(arbiter.io.chosen).writeData.ready := true.B
       chosen_reg := arbiter.io.chosen
       address_reg := io.in(arbiter.io.chosen).writeAddr.bits.addr
       aw_determined := true.B
@@ -121,6 +122,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
     when(io.out.writeAddr.fire){
       aw_determined := false.B
     }
+    io.in(chosen_reg).writeData.ready := true.B
     io.out.writeResp.ready := false.B
   }
   .elsewhen(state === sWaitResp){
