@@ -2,6 +2,7 @@ package acal_lab14.AXILite
 
 import chisel3._
 import chisel3.util._
+import chisel3.experimental.BundleLiterals._
 import acal_lab14.AXI._
 
 class readOut(val idWidth: Int, val addrWidth: Int, val dataWidth: Int) extends Bundle {
@@ -19,20 +20,94 @@ class AXISlaveReadMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, v
     val in = Vec(nMasters, new readIn(idWidth, addrWidth, dataWidth))
   })
 
-  val arbiter = Module(new RRArbiter(new Axi4Request(idWidth, addrWidth, dataWidth), nMasters))
-  val chosen_reg = RegNext(arbiter.io.chosen.asUInt) // synchronous read will return data in the next cycle
-  for (i <- 0 until nMasters) {
-    arbiter.io.in(i) <> io.in(i).readAddr
-  }
+  val mask = WireDefault(VecInit(Seq.fill(nMasters)(1.U(1.W))))
+  // state enum
+  val sIdle :: sWaitResp :: sReturn :: Nil = Enum(3)
+  // state register
+  val state = RegInit(sIdle)
 
-  // arbiter.io.in <> io.in.readAddr
-  io.out.readAddr <> arbiter.io.out
+  val outstanding = WireDefault((0 until nMasters).map(i => io.in(i).readAddr.valid).reduce(_ | _))
+
+  val arbiter = Module(new RRArbiter(Bool(), nMasters))
+  val chosen_reg = RegInit(0.U)
+  val ar_determined = RegInit(false.B) // true for read address determined
+  val address_reg = RegInit(0.U(addrWidth.W))
+  val data_reg = RegInit((new Axi4ReadData(idWidth, dataWidth).Lit(
+    _.id   -> 0.U,     // DontCare in AXILite
+    _.data -> 0.U,
+    _.resp -> 0.U,
+    _.last -> false.B, // DontCare in AXILite
+  )))
+
+  io.out.readAddr.bits.qos := DontCare
+  io.out.readAddr.bits.len := DontCare
+  io.out.readAddr.bits.cache := DontCare
+  io.out.readAddr.bits.lock := DontCare
+  io.out.readAddr.bits.size := DontCare
+  io.out.readAddr.bits.id := DontCare
+  io.out.readAddr.bits.prot := DontCare
+  io.out.readAddr.bits.region := DontCare
+  io.out.readAddr.bits.burst := DontCare
+  io.out.readData.ready := false.B
+  arbiter.io.out.ready := true.B
+
   for (i <- 0 until nMasters) {
-    io.in(i).readData.bits.data := io.out.readData.bits.data
+    io.in(i).readData.bits.data := 0.U
     io.in(i).readData.valid := false.B
     io.in(i).readData.bits.resp := 0.U
     io.in(i).readData.bits.id := DontCare
     io.in(i).readData.bits.last := true.B
   }
-  io.in(chosen_reg).readData <> io.out.readData
+
+  for (i <- 0 until nMasters) {
+    io.in(i).readAddr.ready := arbiter.io.in(i).ready & mask(i)
+    arbiter.io.in(i).valid := io.in(i).readAddr.valid & mask(i)
+    arbiter.io.in(i).bits := false.B  // DontCare
+  }
+
+  io.out.readAddr.valid := ar_determined
+
+  switch(state){
+    is(sIdle){
+      when(outstanding){
+        state := sWaitResp
+      }
+    }
+    is(sWaitResp){
+      when(io.out.readData.fire){
+        state := sReturn
+      }
+    }
+    is(sReturn){
+      when(io.in(chosen_reg).readData.fire){
+        state := sIdle
+      }
+    }
+  }
+
+  when(state === sIdle){
+    mask.foreach(_ := 1.U)
+    when(arbiter.io.out.valid){
+      chosen_reg := arbiter.io.chosen
+      address_reg := io.in(arbiter.io.chosen).readAddr.bits.addr
+      ar_determined := true.B
+    }
+    io.out.readData.ready := false.B
+  }
+  .elsewhen(state === sWaitResp){
+      mask.foreach(_ := 0.U)
+      when(io.out.readAddr.fire){
+        ar_determined := false.B
+      }
+      when(io.out.readData.fire){
+        data_reg := io.out.readData.bits
+      }
+      io.out.readData.ready := true.B
+  }
+  .elsewhen(state === sReturn){
+    io.in(chosen_reg).readData.valid := true.B
+  }
+
+  io.out.readAddr.bits.addr <> address_reg
+  io.in(chosen_reg).readData.bits <> data_reg
 }
