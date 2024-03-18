@@ -125,26 +125,32 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
                 dut.io.out.readData.enqueue(genAXIrSignals(BigInt("9999", 16)))
             }.fork
                 .withRegion(Monitor){
-                    while(!dut.io.out.readAddr.valid.peek().litToBoolean)
+                    while(!(dut.io.in(0).readData.valid.peek().litToBoolean | dut.io.in(1).readData.valid.peek().litToBoolean))
                         dut.clock.step(1)
                     println("[Test 3] First try") 
                     println("[Test 3]: Slave observe address 0x" + dut.io.out.readAddr.bits.addr.peek().litValue.toString(16))
                     println("[Test 3]: Master 0 observe data 0x" + dut.io.in(0).readData.bits.data.peek().litValue.toString(16))
                     println("[Test 3]: Master 1 observe data 0x" + dut.io.in(1).readData.bits.data.peek().litValue.toString(16))
-
                     dut.clock.step(1)
+
+                    while(!(dut.io.in(0).readData.valid.peek().litToBoolean | dut.io.in(1).readData.valid.peek().litToBoolean))
+                        dut.clock.step(1)
                     println("[Test 3] Second try") 
                     println("[Test 3]: Slave observe address 0x" + dut.io.out.readAddr.bits.addr.peek().litValue.toString(16))
                     println("[Test 3]: Master 0 observe data 0x" + dut.io.in(0).readData.bits.data.peek().litValue.toString(16))
                     println("[Test 3]: Master 1 observe data 0x" + dut.io.in(1).readData.bits.data.peek().litValue.toString(16))
-
                     dut.clock.step(1)
+
+                    while(!(dut.io.in(0).readData.valid.peek().litToBoolean | dut.io.in(1).readData.valid.peek().litToBoolean))
+                        dut.clock.step(1)
                     println("[Test 3] Third try")
                     println("[Test 3]: Slave observe address 0x" + dut.io.out.readAddr.bits.addr.peek().litValue.toString(16))
                     println("[Test 3]: Master 0 observe data 0x" + dut.io.in(0).readData.bits.data.peek().litValue.toString(16))
                     println("[Test 3]: Master 1 observe data 0x" + dut.io.in(1).readData.bits.data.peek().litValue.toString(16))
-
                     dut.clock.step(1)
+
+                    while(!(dut.io.in(0).readData.valid.peek().litToBoolean | dut.io.in(1).readData.valid.peek().litToBoolean))
+                        dut.clock.step(1)
                     println("[Test 3] Fourth try")
                     println("[Test 3]: Slave observe address 0x" + dut.io.out.readAddr.bits.addr.peek().litValue.toString(16))
                     println("[Test 3]: Master 0 observe data 0x" + dut.io.in(0).readData.bits.data.peek().litValue.toString(16))

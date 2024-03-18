@@ -169,23 +169,29 @@ class AXISlaveWriteMuxTest extends AnyFlatSpec with ChiselScalatestTester{
                 }
             }.fork
                 .withRegion(Monitor){
-                    while(!dut.io.out.writeAddr.valid.peek().litToBoolean)
+                    while(!(dut.io.out.writeAddr.valid.peek().litToBoolean & dut.io.out.writeData.valid.peek().litToBoolean))
                         dut.clock.step(1)
                     println("[Test 3] First try") 
                     println("[Test 3]: Slave observe address 0x" + dut.io.out.writeAddr.bits.addr.peek().litValue.toString(16))
                     println("[Test 3]: Slave observe data 0x" + dut.io.out.writeData.bits.data.peek().litValue.toString(16))
-
                     dut.clock.step(1)
+
+                    while(!(dut.io.out.writeAddr.valid.peek().litToBoolean & dut.io.out.writeData.valid.peek().litToBoolean))
+                        dut.clock.step(1)
                     println("[Test 3] Second try") 
                     println("[Test 3]: Slave observe address 0x" + dut.io.out.writeAddr.bits.addr.peek().litValue.toString(16))
                     println("[Test 3]: Slave observe data 0x" + dut.io.out.writeData.bits.data.peek().litValue.toString(16))
-
                     dut.clock.step(1)
+
+                    while(!(dut.io.out.writeAddr.valid.peek().litToBoolean & dut.io.out.writeData.valid.peek().litToBoolean))
+                        dut.clock.step(1)
                     println("[Test 3] Third try")
                     println("[Test 3]: Slave observe address 0x" + dut.io.out.writeAddr.bits.addr.peek().litValue.toString(16))
                     println("[Test 3]: Slave observe data 0x" + dut.io.out.writeData.bits.data.peek().litValue.toString(16))
-
                     dut.clock.step(1)
+
+                    while(!(dut.io.out.writeAddr.valid.peek().litToBoolean & dut.io.out.writeData.valid.peek().litToBoolean))
+                        dut.clock.step(1)
                     println("[Test 3] Fourth try")
                     println("[Test 3]: Slave observe address 0x" + dut.io.out.writeAddr.bits.addr.peek().litValue.toString(16))
                     println("[Test 3]: Slave observe data 0x" + dut.io.out.writeData.bits.data.peek().litValue.toString(16))

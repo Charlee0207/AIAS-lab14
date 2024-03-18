@@ -145,6 +145,7 @@ class AXISlaveWriteMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, 
       io.out.writeResp.ready := true.B
   }
   .elsewhen(state === sReturn){
+    mask.foreach(_ := 0.U)
     io.in(chosen_reg).writeResp.valid := true.B
   }
 

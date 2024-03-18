@@ -109,6 +109,7 @@ class AXISlaveReadMux(val nMasters: Int, val idWidth: Int, val addrWidth: Int, v
       io.out.readData.ready := true.B
   }
   .elsewhen(state === sReturn){
+    mask.foreach(_ := 0.U)
     io.in(chosen_reg).readData.valid := true.B
   }
 
