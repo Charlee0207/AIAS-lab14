@@ -8,6 +8,7 @@ object AXI_Config {
     val s_id_width = 17
     val addr_width = 32
     val data_width = 32
+    // allocation of 2 slaves in memory space
     val addr_map = List((Integer.parseInt("8000",16), Integer.parseInt("10000",16)), (Integer.parseInt("10000",16), Integer.parseInt("20000",16)))
 }
 

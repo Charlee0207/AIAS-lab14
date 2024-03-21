@@ -11,9 +11,6 @@ import chisel3.experimental.BundleLiterals._
 import acal_lab14.AXI._
 import Config._
 
-// allocation of 2 slave in memory space
-
-
 class AXIReadBusTest extends AnyFlatSpec with ChiselScalatestTester{
     // Functions for generating test vectors
     def genAXIarSignals(addr: BigInt): Axi4Request = {
@@ -92,6 +89,8 @@ class AXIReadBusTest extends AnyFlatSpec with ChiselScalatestTester{
                 dut.io.slave(i).readAddr.initSink().setSinkClock(dut.clock)
             }
 
+            println("----START TEST----")
+
             fork{
                 dut.io.slave(0).readAddr.expectDequeue(genAXIarSignals(BigInt("9000", 16)))
                 dut.io.slave(0).readAddr.expectDequeue(genAXIarSignals(BigInt("9008", 16)))
@@ -116,6 +115,7 @@ class AXIReadBusTest extends AnyFlatSpec with ChiselScalatestTester{
                 dut.io.master.readAddr.enqueue(genAXIarSignals(BigInt("19008", 16)))
             }.join()
             dut.clock.step(2)
+            
             println("----TEST END----")
         }
     }

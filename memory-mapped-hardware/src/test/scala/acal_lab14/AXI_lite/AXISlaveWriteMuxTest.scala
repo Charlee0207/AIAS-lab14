@@ -11,9 +11,6 @@ import chisel3.experimental.BundleLiterals._
 import acal_lab14.AXI._
 import Config._
 
-// allocation of 2 slaves in memory space
-
-
 class AXISlaveWriteMuxTest extends AnyFlatSpec with ChiselScalatestTester{
     // Functions for generating test vectors
      def genAXIawSignals(addr: BigInt): Axi4Request = {
@@ -197,6 +194,8 @@ class AXISlaveWriteMuxTest extends AnyFlatSpec with ChiselScalatestTester{
                     println("[Test 3]: Slave observe data 0x" + dut.io.out.writeData.bits.data.peek().litValue.toString(16))
                 }
                 .joinAndStep(dut.clock)
+            dut.clock.step(2)
+
             println("----TEST END----")
         }
     }

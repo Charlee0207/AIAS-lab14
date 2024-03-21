@@ -11,9 +11,6 @@ import chisel3.experimental.BundleLiterals._
 import acal_lab14.AXI._
 import Config._
 
-// allocation of 2 slaves in memory space
-
-
 class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
     // Functions for generating test vectors
     def genAXIarSignals(addr: BigInt): Axi4Request = {
@@ -157,6 +154,8 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
                     println("[Test 3]: Master 1 observe data 0x" + dut.io.in(1).readData.bits.data.peek().litValue.toString(16))
                 }
                 .joinAndStep(dut.clock)
+            dut.clock.step(2)
+
             println("----TEST END----")
         }
 
