@@ -164,7 +164,7 @@ hang:
 la t6,REG_ROFFSET_STATUS             
 lw t4,0(t6)  
 add t4,t3,t4
-lw t5,0(t4)                          
+lw t5,0(t4)              
 ## load STATUS, check "DONE" signal 
 li t6,1
 
@@ -179,7 +179,8 @@ li t6,1
 ## Notice that 
 
 ## If (t5 == t6) means it's done!
-beq t5,t6,FINISH                     
+li t5, 1
+beq t5,t6,FINISH
 j hang
 
 
