@@ -2,8 +2,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <string>
+#include <sys/stat.h>
+#include <cstdio>
 #include <ctype.h>
+#include <cstdlib>
 #include <errno.h>
+#include <iostream>
 #include "translate.h"
 
 char *concat(const char *s1, const char *s2)
@@ -74,10 +79,13 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 
 	char *path;
 	copy_path(argv1, &path);
-
-	FILE *mch_file = fopen(concat(path, "m_code.hex"), "w");
-	FILE *inst_file = fopen(concat(path, "inst.asm"), "w");
-	FILE *data_file = fopen(concat(path, "data.hex"), "w");
+    FILE *dir_test = fopen(concat(path, "build"), "r");
+    if(dir_test == NULL){
+        mkdir(concat(path, "build"), 0777);
+    }
+	FILE *mch_file = fopen(concat(path, "build/m_code.hex"), "w");
+	FILE *inst_file = fopen(concat(path, "build/inst.asm"), "w");
+	FILE *data_file = fopen(concat(path, "build/data.hex"), "w");
 
 	while (!dexit)
 	{

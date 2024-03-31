@@ -85,6 +85,7 @@ la s2, mat_C
 
 ## s3 -> address of ACCEL_MEM_BASE_ADDR
 la s3, ACCEL_MEM_BASE_ADDR
+lw s3, 0(s3)
 
 
 ######################
@@ -139,12 +140,12 @@ li t1, 0
 ## t1 = 0x300000 + 0x00
 add t1, t1, t0
 ## store 0x01 into mem[0x300000]
-li t2, 0x000000001
+li t2, 0x01
 sw t2, 0(t1)
 
 ## ... moving data ...
 ## wait DMA finish data movement
-wait_dma:
+wait_dma1:
 ## t1 -> 0x14 (offset of DONE reg)
 la t6, DMA_OFFSET_DONE
 lw t1, 0(t6)
@@ -152,7 +153,7 @@ lw t1, 0(t6)
 add t1, t1, t0
 ## load value of mem[0x300014]
 lw t2, 0(t1)
-beq t2, x0, wait_dma
+beq t2, x0, wait_dma1
 
 ## reset DONE reg in DMA
 sw x0, 0(t1)
@@ -204,12 +205,12 @@ li t1, 0
 ## t1 = 0x300000 + 0x00
 add t1, t1, t0
 ## store 0x01 into mem[0x300000]
-li t2, 0x000000001
+li t2, 0x01
 sw t2, 0(t1)
 
 ## ... moving data ...
 ## wait DMA finish data movement
-wait_dma:
+wait_dma2:
 ## t1 -> 0x14 (offset of DONE reg)
 la t6, DMA_OFFSET_DONE
 lw t1, 0(t6)
@@ -217,7 +218,7 @@ lw t1, 0(t6)
 add t1, t1, t0
 ## load value of mem[0x300014]
 lw t2, 0(t1)
-beq t2, x0, wait_dma
+beq t2, x0, wait_dma2
 
 ## reset DONE reg in DMA
 sw x0, 0(t1)
@@ -307,11 +308,4 @@ beq t2, x0, wait_sa
 
 ## reset DONE reg in DMA
 sw x0, 0(t1)
-
-
-
-
 hcf
-
-
-
