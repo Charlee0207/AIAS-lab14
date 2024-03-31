@@ -10,6 +10,10 @@
 #include "translate.h"
 #include "linenoise.hpp"
 
+// Macro
+#define ACCEL_ENABLE 0x100000
+#define DMA_ENABLE 0x300000
+
 bool streq(char *s, const char *q)
 {
 	if (strcmp(s, q) == 0)
@@ -55,18 +59,6 @@ instr_type parse_instr(char *tok)
 	// instruction added
 	if (streq(tok, "mul"))
 		return MUL;
-	if (streq(tok, "vle6.v"))
-		return VLE6_V;
-	if (streq(tok, "vse6.v"))
-		return VSE6_V;
-	if (streq(tok, "vle8.v"))
-		return VLE8_V;
-	if (streq(tok, "vse8.v"))
-		return VSE8_V;
-	if (streq(tok, "vadd.vv"))
-		return VADD_VV;
-	if (streq(tok, "vmul.vx"))
-		return VMUL_VX;
 	//*****************
 
 	// 2r->1r
@@ -300,8 +292,7 @@ void mem_write(uint8_t *mem, uint32_t addr, uint32_t data, instr_type op)
 {
 	// printf( "Storing %x to %d\n", data, addr );
 	int bytes = 0;
-	switch (op)
-	{
+	switch (op) {
 	case SB:
 		bytes = 1;
 		break;
@@ -311,43 +302,31 @@ void mem_write(uint8_t *mem, uint32_t addr, uint32_t data, instr_type op)
 	case SW:
 		bytes = 4;
 		break;
-
-	// instruction added
-	case VSE6_V:
-	case VSE8_V:
-		bytes = 1;
-		break;
-		//
 	}
-	if (addr < MEM_BYTES && addr + bytes <= MEM_BYTES)
-	{
-		switch (op)
-		{
-		case SB:
-			mem[addr] = *(uint8_t *)&(data);
-			break;
-		case SH:
-			*(uint16_t *)&(mem[addr]) = *(uint16_t *)&(data);
-			break;
-		case SW:
-			*(uint32_t *)&(mem[addr]) = data;
-			// printf( "Writing %x to addr %x\n", rf[i.a1.reg], rf[i.a2.reg]+i.a3.imm );
+
+	if ( addr < MEM_BYTES && addr + bytes <= MEM_BYTES ) {
+		switch (op ) {
+			case SB: mem[addr] = *(uint8_t*)&(data); break;
+			case SH: *(uint16_t*)&(mem[addr]) = *(uint16_t*)&(data); break;
+			case SW: 
+				*(uint32_t*)&(mem[addr]) = data;
+				/*Software 設定Enable reigster 的enable it 時
+                  模擬硬體會set STATUS register 裡的Done bit的動作 */
+                if (addr == ACCEL_BASE_ADDRESS + ACCEL_ENABLE_OFFSET && (data & (uint32_t)0x01 == 1)){
+                    mem[ACCEL_BASE_ADDRESS + ACCEL_STATUS_OFFSET] = 1; // set done bit
+					mem[ACCEL_BASE_ADDRESS + ACCEL_ENABLE_OFFSET] = 1; // clear enable bit
+				} else if (addr == DMA_BASE_ADDRESS + DMA_ENABLE_OFFSET && (data & (uint32_t)0x01 == 1)){
+					mem[DMA_BASE_ADDRESS + DMA_STATUS_OFFSET] = 1; // set done bit
+					mem[DMA_BASE_ADDRESS + DMA_ENABLE_OFFSET] = 1; // clear enable bit
+				}
 			break;
 
-		// instruction added
-		case VSE6_V:
-		case VSE8_V:
-			mem[addr] = *(uint8_t *)&(data);
-			break;
+			// instruction added
 			//*****************
 		}
-	}
-	else if (addr == MEM_BYTES)
-	{
+	} else if (addr == MEM_BYTES) {
 		printf("[System output]: 0x%x\n", data);
-	}
-	else
-	{
+	} else {
 		printf("0x%x -- 0x%x\n", addr, data);
 	}
 }
@@ -372,10 +351,6 @@ uint32_t mem_read(uint8_t *mem, uint32_t addr, instr_type op)
 		break;
 
 	// instruction added
-	case VLE6_V:
-	case VLE8_V:
-		bytes = 1;
-		break;
 		//*********************
 	}
 	if (addr + bytes <= MEM_BYTES)
@@ -407,12 +382,6 @@ uint32_t mem_read(uint8_t *mem, uint32_t addr, instr_type op)
 			break;
 
 		// instruction added
-		case VLE8_V:
-			ret = signextend(mem[addr], 8);
-			break;
-		case VLE6_V:
-			ret = mem[addr];
-			break;
 			//**********************
 		}
 	}
@@ -796,53 +765,6 @@ int parse_instr(int line, char *ftok, instr *imem, int memoff, label_loc *labels
 			return 1;
 
 		// instruction added, we skip the implementation of vector mask function
-		case VLE6_V:
-			if (!o1 || !o2 || !o3 || o4)
-				print_syntax_error(line, "Vector Operation Invalid format");
-			i->a1.reg = parse_vector_reg(o1, line);
-			i->a2.reg = parse_reg(strtok(o2, "()"), line);
-			i->a3.imm = 0;
-			return 1;
-
-		case VLE8_V:
-			if (!o1 || !o2 || !o3 || o4)
-				print_syntax_error(line, "Vector Operation Invalid format");
-			i->a1.reg = parse_vector_reg(o1, line);
-			i->a2.reg = parse_reg(strtok(o2, "()"), line);
-			i->a3.imm = 0;
-			return 1;
-
-		case VSE6_V:
-			if (!o1 || !o2 || !o3 || o4)
-				print_syntax_error(line, "Vector Operation Invalid format");
-			i->a1.reg = parse_vector_reg(o1, line);
-			i->a2.reg = parse_reg(strtok(o2, "()"), line);
-			i->a3.imm = 0;
-			return 1;
-
-		case VSE8_V:
-			if (!o1 || !o2 || !o3 || o4)
-				print_syntax_error(line, "Vector Operation Invalid format");
-			i->a1.reg = parse_vector_reg(o1, line);
-			i->a2.reg = parse_reg(strtok(o2, "()"), line);
-			i->a3.imm = 0;
-			return 1;
-
-		case VADD_VV:
-			if (!o1 || !o2 || !o3 || !o4)
-				print_syntax_error(line, "Invalid format");
-			i->a1.reg = parse_vector_reg(o1, line);
-			i->a2.reg = parse_vector_reg(o2, line);
-			i->a3.reg = parse_vector_reg(o3, line);
-			return 1;
-
-		case VMUL_VX:
-			if (!o1 || !o2 || !o3 || !o4)
-				print_syntax_error(line, "Invalid format");
-			i->a1.reg = parse_vector_reg(o1, line);
-			i->a2.reg = parse_vector_reg(o2, line);
-			i->a3.reg = parse_reg(o3, line);
-			return 1;
 
 		case MUL:
 			if (!o1 || !o2 || !o3 || o4)
@@ -1193,69 +1115,6 @@ void execute(uint8_t *mem, instr *imem, label_loc *labels, int label_count, bool
 		{
 
 			// instruction added
-		case VLE6_V:
-			uint8_t temp_lw6[VLMAX];
-			for (int k = 0; k < VLMAX; k++)
-			{
-				uint32_t rv = mem_read(mem, rf[i.a2.reg] + i.a3.imm + k, i.op);
-				temp_lw6[k] = (uint8_t)rv;
-			};
-			printf(">> MEM[%x]: 0x%02x%02x%02x%02x%02x%02x -> vrf[x%02d]\n", rf[i.a2.reg] + i.a3.imm, temp_lw6[5], temp_lw6[4], temp_lw6[3], temp_lw6[2], temp_lw6[1], temp_lw6[0], i.a1.reg);
-			vrf[i.a1.reg] = *(uint64_t *)temp_lw6;
-			break;
-
-		case VLE8_V:
-			uint8_t temp_lw[VLMAX];
-			for (int k = 0; k < VLMAX; k++)
-			{
-				uint32_t rv = mem_read(mem, rf[i.a2.reg] + i.a3.imm + k, i.op);
-				temp_lw[k] = (uint8_t)rv;
-			};
-			vrf[i.a1.reg] = *(uint64_t *)temp_lw;
-			break;
-
-		case VSE6_V:
-			uint8_t temp_sw6[VLMAX];
-			for (int k = 0; k < VLMAX; k++)
-			{
-				temp_sw6[k] = (uint8_t)(vrf[i.a1.reg] >> k * ELEMENT_WIDTH);
-				mem_write(mem, rf[i.a2.reg] + i.a3.imm + k, (uint32_t)temp_sw6[k], i.op);
-			};
-			printf(">> vrf[x%02d]: 0x%02x%02x%02x%02x%02x%02x -> MEM[%x]\n", i.a1.reg, temp_sw6[5], temp_sw6[4], temp_sw6[3], temp_sw6[2], temp_sw6[1], temp_sw6[0], rf[i.a2.reg] + i.a3.imm);
-			break;
-
-		case VSE8_V:
-			uint8_t temp_sw[VLMAX];
-			for (int k = 0; k < VLMAX; k++)
-			{
-				temp_sw[k] = (uint8_t)(vrf[i.a1.reg] >> k * ELEMENT_WIDTH);
-				mem_write(mem, rf[i.a2.reg] + i.a3.imm + k, (uint32_t)temp_sw[k], i.op);
-			};
-			break;
-
-		case VADD_VV:
-			uint8_t src1[VLMAX], src2[VLMAX], dest[VLMAX];
-			for (int k = 0; k < VLMAX; k++)
-			{
-				src1[k] = (uint8_t)(vrf[i.a2.reg] >> k * ELEMENT_WIDTH);
-				src2[k] = (uint8_t)(vrf[i.a3.reg] >> k * ELEMENT_WIDTH);
-				dest[k] = src1[k] + src2[k];
-			};
-			vrf[i.a1.reg] = *(uint64_t *)dest;
-			break;
-
-		case VMUL_VX:
-			uint8_t src1_m[VLMAX];
-			uint8_t src2_m;
-			uint8_t dest_m[VLMAX];
-			src2_m = (uint8_t)(rf[i.a3.reg]);
-			for (int k = 0; k < VLMAX; k++)
-			{
-				src1_m[k] = (uint8_t)(vrf[i.a2.reg] >> k * ELEMENT_WIDTH);
-				dest_m[k] = src1_m[k] * src2_m;
-			};
-			vrf[i.a1.reg] = *(uint64_t *)dest_m;
-			break;
 
 		case MUL:
 			rf[i.a1.reg] = rf[i.a2.reg] * rf[i.a3.reg];
@@ -1335,15 +1194,6 @@ void execute(uint8_t *mem, instr *imem, label_loc *labels, int label_count, bool
 		case SW:
 			mem_write(mem, rf[i.a2.reg] + i.a3.imm, rf[i.a1.reg], i.op);
 			break;
-			/*
-
-			case SB: mem[rf[i.a2.reg]+i.a3.imm] = *(uint8_t*)&(rf[i.a1.reg]); break;
-			case SH: *(uint16_t*)&(mem[rf[i.a2.reg]+i.a3.imm]) = *(uint16_t*)&(rf[i.a1.reg]); break;
-			case SW:
-				*(uint32_t*)&(mem[rf[i.a2.reg]+i.a3.imm]) = rf[i.a1.reg];
-				//printf( "Writing %x to addr %x\n", rf[i.a1.reg], rf[i.a2.reg]+i.a3.imm );
-			break;
-			*/
 
 		case BEQ:
 			if (rf[i.a1.reg] == rf[i.a2.reg])
@@ -1561,12 +1411,12 @@ int main(int argc, char **argv)
 	parse(fin, mem, imem, memoff, labels, label_count, &src);
 	normalize_labels(imem, labels, label_count, &src);
 
-	translate_to_machine_code(mem, imem, argv[1]);
-	printf("translation done!\n");
 
 	execute(mem, imem, labels, label_count, start_immediate);
 	printf("Execution done!\n");
 
+	translate_to_machine_code(mem, imem, argv[1]);
+	printf("translation done!\n");
 	// for(int i = 0; i < label_count; i++){
 	// 	printf("label %s locates in %d\n",labels[i].label,labels[i].loc);
 	// }

@@ -9,7 +9,7 @@
 #define EMULATOR_H__
 
 // 64 KB
-#define MEM_BYTES 0x10000
+#define MEM_BYTES 0x400000 
 #define TEXT_OFFSET 0
 #define DATA_OFFSET 32768
 
@@ -17,9 +17,15 @@
 #define MAX_LABEL_LEN 32
 #define MAX_SRC_LEN (1024 * 1024)
 
-#define VECTOR_LEN 48
-#define ELEMENT_WIDTH 8
-#define VLMAX VECTOR_LEN / ELEMENT_WIDTH
+// parameter for MM registers for memory
+#define ACCEL_BASE_ADDRESS 0x100000
+#define ACCEL_ENABLE_OFFSET 0x0
+#define ACCEL_STATUS_OFFSET 0x4
+
+#define DMA_BASE_ADDRESS 0x300000
+#define DMA_ENABLE_OFFSET 0x0
+#define DMA_STATUS_OFFSET 0x14
+
 
 typedef struct
 {
@@ -33,12 +39,6 @@ typedef enum
 
 	// instruction added
 	MUL,
-	VLE6_V,
-	VSE6_V,
-	VLE8_V,
-	VSE8_V,
-	VADD_VV,
-	VMUL_VX,
 	//*****************
 
 	ADD,

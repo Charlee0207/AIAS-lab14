@@ -431,37 +431,6 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 			binary += 1 << 25;
 			break;
 
-		case VADD_VV:
-			binary = (0x57);					// opcode
-			binary += i.a1.reg << 7;	// vd
-			binary += i.a2.reg << 15; // vs1
-			binary += i.a3.reg << 20; // vs2
-			break;
-
-		case VMUL_VX:
-			binary = (0x57);					// opcode
-			binary += i.a1.reg << 7;	// vd
-			binary += 4 << 12;				// funct3
-			binary += i.a2.reg << 15; // vs1
-			binary += i.a3.reg << 20; // rs2
-			binary += 0b100101 << 26; // funct6
-			// set vm as 0
-			break;
-
-		case VSE6_V:
-			binary = (0x27);					// opcode
-			binary += i.a1.reg << 7;	// vs3(store data)
-			binary += i.a2.reg << 15; // rs1(store address)
-			// set sumop, vm, mop, mew, nf as 0
-			break;
-
-		case VLE6_V:
-			binary = (0x7);						// opcode
-			binary += i.a1.reg << 7;	// vd(load vector register)
-			binary += i.a2.reg << 15; // rs1(load address)
-			// set lumop, vm, mop, mew, nf as 0
-			break;
-
 		case LUI:
 			// rf[i.a1.reg] = (i.a2.imm<<12);
 			binary = (0x0D << 2) + 0x03;
