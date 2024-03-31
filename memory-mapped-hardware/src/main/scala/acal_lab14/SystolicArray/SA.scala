@@ -6,6 +6,7 @@ import chisel3.util._
 import scala.io.Source
 
 import acal_lab14.AXILite._
+import Config._
 
 /** SA module includes a tile, two buffers and control logic
   * @param rows
@@ -174,7 +175,7 @@ class SA(rows: Int, cols: Int, addr_width: Int, data_width: Int, reg_width: Int)
 
 object SATop extends App {
   (new chisel3.stage.ChiselStage).emitVerilog(
-    new SA(4, 4, 32, 64, 32), // rows, cols, addr_width, data_width, reg_width
+    new SA(SA_config.dimX, SA_config.dimY, 32, 64, 32), // rows, cols, addr_width, data_width, reg_width
     Array("-td", "./generated/SA")
   )
 }

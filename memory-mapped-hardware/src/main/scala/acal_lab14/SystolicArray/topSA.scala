@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 
 import acal_lab14.AXI._
+import Config._
 
 /** topSA module
   *
@@ -11,15 +12,17 @@ import acal_lab14.AXI._
   *
   * pure wiring between these two modules and I/O interface
   */
-class topSA(id_width: Int, addr_width: Int, data_width: Int, reg_width: Int) extends Module {
+class topSA(s_id_width: Int, addr_width: Int, data_width: Int, reg_width: Int, sa_mem_size: Int) extends Module {
   val io = IO(new Bundle {
     // slave interface for connecting to AXI bus
-    val slave = new Axi4SlaveIF(id_width, addr_width, data_width)
+    val slave = new Axi4SlaveIF(s_id_width, addr_width, data_width)
+    val tb_slave = new Axi4SlaveIF(s_id_width, addr_width, data_width)
+    val tb_en = Input(Bool())
   })
 
   // module declaration
-  val sa = Module(new SA(4, 4, addr_width, data_width, reg_width))
-  val mm = Module(new Memory_Mapped(0x8000, id_width, addr_width, data_width, reg_width))
+  val sa = Module(new SA(SA_config.dimX, SA_config.dimY, addr_width, data_width, reg_width))
+  val mm = Module(new Memory_Mapped(sa_mem_size, s_id_width, addr_width, data_width, reg_width))
 
   // module wiring
   io.slave <> mm.io.slave
@@ -32,4 +35,8 @@ class topSA(id_width: Int, addr_width: Int, data_width: Int, reg_width: Int) ext
   mm.io.wdata <> sa.io.wdata
   mm.io.wstrb <> sa.io.wstrb
   mm.io.wen <> sa.io.wen
+
+  // testbench
+  io.tb_slave <> mm.io.tb_slave
+  mm.io.tb_en := io.tb_en
 }

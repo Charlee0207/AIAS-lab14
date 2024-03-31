@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 
 import acal_lab14.AXI._
+import Config._
 
 /** Memory_Mapped module
   *
@@ -14,11 +15,12 @@ import acal_lab14.AXI._
   * @param reg_width
   *   the data size of mmio regs
   */
-class Memory_Mapped(mem_size: Int, id_width: Int, addr_width: Int, data_width: Int, reg_width: Int) extends Module {
+class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width: Int, reg_width: Int) extends Module {
   val io = IO(new Bundle {
     // for CPU to access the Reg and Memory
-    val slave = new Axi4SlaveIF(id_width, addr_width, data_width)
-
+    val slave = new Axi4SlaveIF(s_id_width, addr_width, data_width)
+    val tb_slave = new Axi4SlaveIF(s_id_width, addr_width, data_width)
+    val tb_en = Input(Bool())
     /*
       mmio source: SA
       mmio destination: MMIO_Regfile
@@ -39,9 +41,6 @@ class Memory_Mapped(mem_size: Int, id_width: Int, addr_width: Int, data_width: I
   val rf = Module(new MMIO_Regfile(addr_width, reg_width))
   val lm = Module(new LocalMem(mem_size, addr_width, data_width))
 
-
-  val ACCEL_REG_BASE_ADDR = 0x100000 // MMIO reg base address
-  val ACCEL_MEM_BASE_ADDR = 0x200000 // Local mem base address
   // byte to bits
   val byte = 8
 
@@ -133,12 +132,12 @@ class Memory_Mapped(mem_size: Int, id_width: Int, addr_width: Int, data_width: I
 
     // if ACCEL_MEM_BASE_ADDR <= RAReg < ACCEL_MEM_BASE_ADDR -> CPU tend to read MMIO_Regfile
     rf.io.raddr := Mux(
-      (ACCEL_REG_BASE_ADDR.U <= RAReg && RAReg < ACCEL_MEM_BASE_ADDR.U),
-      (RAReg - ACCEL_REG_BASE_ADDR.U) >> 2, // divided by 4 because of addr format of RegFile
+      (SA_config.ACCEL_REG_BASE_ADDR.U <= RAReg && RAReg < SA_config.ACCEL_MEM_BASE_ADDR.U),
+      (RAReg - SA_config.ACCEL_REG_BASE_ADDR.U) >> 2, // divided by 4 because of addr format of RegFile
       0.U
     )
     // if ACCEL_MEM_BASE_ADDR <= RAReg -> CPU tend to read LocalMem
-    lm.io.raddr := Mux((ACCEL_MEM_BASE_ADDR.U <= RAReg), (RAReg - ACCEL_MEM_BASE_ADDR.U), 0.U)
+    lm.io.raddr := Mux((SA_config.ACCEL_MEM_BASE_ADDR.U <= RAReg), (RAReg - SA_config.ACCEL_MEM_BASE_ADDR.U), 0.U)
 
     // when DoRead === true.B -> RDValidReg HIGH -> complete read request
     RDValidReg := DoRead
@@ -148,7 +147,7 @@ class Memory_Mapped(mem_size: Int, id_width: Int, addr_width: Int, data_width: I
     io.slave.r.bits.data := RDReg
     io.slave.r.bits.resp := 0.U
 
-    when(RAReg < ACCEL_MEM_BASE_ADDR.U) {
+    when(RAReg < SA_config.ACCEL_MEM_BASE_ADDR.U) {
       RDReg := Mux(DoRead, Cat(0.U(32.W), rf.io.rdata), 0.U)
     }.otherwise {
       RDReg := Mux(DoRead, lm.io.rdata, 0.U)
@@ -167,15 +166,15 @@ class Memory_Mapped(mem_size: Int, id_width: Int, addr_width: Int, data_width: I
 
     when(DoWrite) {
       rf.io.waddr := WAReg >> 2
-      lm.io.waddr := WAReg - ACCEL_MEM_BASE_ADDR.U
+      lm.io.waddr := WAReg - SA_config.ACCEL_MEM_BASE_ADDR.U
 
       rf.io.wdata := WDReg(31, 0)
       lm.io.wdata := WDReg(31, 0)
 
       lm.io.wstrb := WSReg
 
-      rf.io.wen := Mux(io.slave.aw.bits.addr < ACCEL_MEM_BASE_ADDR.U, true.B, false.B)
-      lm.io.wen := Mux(io.slave.aw.bits.addr < ACCEL_MEM_BASE_ADDR.U, false.B, true.B)
+      rf.io.wen := Mux(io.slave.aw.bits.addr < SA_config.ACCEL_MEM_BASE_ADDR.U, true.B, false.B)
+      lm.io.wen := Mux(io.slave.aw.bits.addr < SA_config.ACCEL_MEM_BASE_ADDR.U, false.B, true.B)
     }
 
     WRValidReg               := DoWrite && !WRValidReg
@@ -207,5 +206,24 @@ class Memory_Mapped(mem_size: Int, id_width: Int, addr_width: Int, data_width: I
     rf.io.mmio.WEN       := io.mmio.WEN
     rf.io.mmio.ENABLE_IN := io.mmio.ENABLE_IN
     rf.io.mmio.STATUS_IN := io.mmio.STATUS_IN
+  }
+
+  // Testbench
+  io.tb_slave.ar.ready := false.B
+  io.tb_slave.r.valid := io.tb_en
+  io.tb_slave.r.bits.resp := 0.U
+  io.tb_slave.r.bits.id := 0.U
+  io.tb_slave.r.bits.last := true.B
+  io.tb_slave.r.bits.data := 0.U
+  io.tb_slave.aw.ready := false.B
+  io.tb_slave.w.ready := false.B
+  io.tb_slave.b.valid := false.B
+  io.tb_slave.b.bits.resp := 0.U
+  io.tb_slave.b.bits.id := 0.U
+
+  when(io.tb_en){
+    io.tb_slave.ar.ready := true.B
+    lm.io.raddr := io.tb_slave.ar.bits.addr
+    io.tb_slave.r.bits.data := lm.io.rdata
   }
 }

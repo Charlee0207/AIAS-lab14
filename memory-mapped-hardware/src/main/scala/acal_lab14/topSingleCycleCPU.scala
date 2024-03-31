@@ -7,20 +7,13 @@ import acal_lab14.SingleCycleCPU._
 import acal_lab14.Memory._
 import acal_lab14.AXI._
 import acal_lab14.AXILite._
+import Config._
 
-object config {
-  val nMasters       = 1
-  val id_width       = 2
-  val addr_width     = 32
-  val data_width     = 32
-  val addr_map       = Seq((8000, 8000)) // First element specify the starting address and second element specify memory space size
-  val nSlaves        = addr_map.length
-  val instr_hex_path = "src/main/resource/SingleCycleCPU/m_code.hex"
-  val data_mem_size  = 16 // power of 2 in byte
-  val data_hex_path  = "src/main/resource/SingleCycleCPU/data.hex"
-}
-
-import config._
+/* -------------------------------------------------------------------------------------------+
+ * topSingleCycleCPU consists of a single cycle CPU, SRAM, accelerator connected via AXI bus. |
+ * This system demonstrates that CPU can access shared data memory via system bus. (Lab14-2-2)|
+ * -------------------------------------------------------------------------------------------+
+*/
 
 class top extends Module {
  val io = IO(new Bundle {
@@ -31,23 +24,22 @@ class top extends Module {
    val cycle_count = Output(UInt(32.W))
  })
 
-  val cpu = Module(new SingleCycleCPU(id_width, addr_width, data_width, instr_hex_path))
-  val dm  = Module(new DataMem(id_width, data_mem_size, addr_width, data_width, data_hex_path))
-  val bus = Module(new AXILiteXBar(nMasters, nSlaves, id_width, addr_width, data_width, addr_map))
+  val cpu = Module(new SingleCycleCPU(Lab14_2_2_Config.s_id_width, Lab14_2_2_Config.addr_width, Lab14_2_2_Config.data_width, Lab14_2_2_Config.instr_hex_path))
+  val dm  = Module(new DataMem(Lab14_2_2_Config.s_id_width, Lab14_2_2_Config.data_mem_size, Lab14_2_2_Config.addr_width, Lab14_2_2_Config.data_width, Lab14_2_2_Config.data_hex_path))
+  val bus = Module(new AXILiteXBar(Lab14_2_2_Config.nMasters, Lab14_2_2_Config.nSlaves, Lab14_2_2_Config.s_id_width, Lab14_2_2_Config.addr_width, Lab14_2_2_Config.data_width, Lab14_2_2_Config.addr_map))
 
- // AXI Lite Bus
- bus.io.masters(0) <> cpu.io.bus_master
- bus.io.slaves(0) <> dm.io.bus_slave
+  // AXI Lite Bus
+  bus.io.masters(0) <> cpu.io.master
+  bus.io.slaves(0) <> dm.io.slave
 
- // System
- io.pc   := cpu.io.pc
- io.regs := cpu.io.regs
- io.Hcf  := cpu.io.Hcf
+  // System
+  io.pc   := cpu.io.pc
+  io.regs := cpu.io.regs
+  io.Hcf  := cpu.io.Hcf
 
-
- val cycle_counter = RegInit(1.U(32.W))
- cycle_counter  := cycle_counter + 1.U
- io.cycle_count := cycle_counter
+  val cycle_counter = RegInit(1.U(32.W))
+  cycle_counter  := cycle_counter + 1.U
+  io.cycle_count := cycle_counter
 }
 
 object top extends App {

@@ -4,6 +4,8 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.loadMemoryFromFile
 
+import Config._
+
 /** LocalMem module
   *
   * includes internal memory and systolic array, also the control logics
@@ -31,7 +33,7 @@ class LocalMem(mem_size: Int, addr_width: Int, data_width: Int) extends Module {
   // use SyncReadMem module from chisel.util
   val localMem = SyncReadMem(mem_size, UInt(data_width.W))
   // preload data from hex file (Comment this line for running acal_lab14.topSystolicArray.topTest)
-  loadMemoryFromFile(localMem, "src/main/resource/SystolicArray/LocalMem.hex")
+//   loadMemoryFromFile(localMem, "src/main/resource/SystolicArray/LocalMem.hex")
 
   // wires declaration
   // address -> truncate lower 2 bits to transfer byte addr to word address
@@ -61,7 +63,7 @@ class LocalMem(mem_size: Int, addr_width: Int, data_width: Int) extends Module {
 
 object LocalMemTop extends App {
   (new chisel3.stage.ChiselStage).emitVerilog(
-    new LocalMem(0x8000, 32, 64),
+    new LocalMem(SA_config.sa_mem_size, 32, 64),
     Array("-td", "generated/LocalMem")
   )
 }

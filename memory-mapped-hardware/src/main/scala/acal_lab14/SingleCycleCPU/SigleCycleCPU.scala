@@ -14,7 +14,7 @@ import acal_lab14.SingleCycleCPU.opcode_map._
 class SingleCycleCPU(mIdWidth: Int, memAddrWidth: Int, memDataWidth: Int, instrBinaryFile: String) extends Module {
   val io = IO(new Bundle {
     // AXI
-    val bus_master = new Axi4MasterIF(mIdWidth, memAddrWidth, memDataWidth)
+    val master = new Axi4MasterIF(mIdWidth, memAddrWidth, memDataWidth)
 
    // System
    val pc          = Output(UInt(15.W))
@@ -70,13 +70,13 @@ class SingleCycleCPU(mIdWidth: Int, memAddrWidth: Int, memDataWidth: Int, instrB
     Seq(
       0.U -> MuxLookup(
         funct3,
-        io.bus_master.r.bits.data(31, 0),
+        io.master.r.bits.data(31, 0),
         Seq(
-          "b000".U(3.W) -> Cat(Fill(24, io.bus_master.r.bits.data(7)), io.bus_master.r.bits.data(7, 0)),
-          "b001".U(3.W) -> Cat(Fill(16, io.bus_master.r.bits.data(15)), io.bus_master.r.bits.data(15, 0)),
-          "b010".U(3.W) -> io.bus_master.r.bits.data(31, 0),
-          "b100".U(3.W) -> Cat(0.U(24.W), io.bus_master.r.bits.data(7, 0)),
-          "b101".U(3.W) -> Cat(0.U(16.W), io.bus_master.r.bits.data(15, 0))
+          "b000".U(3.W) -> Cat(Fill(24, io.master.r.bits.data(7)), io.master.r.bits.data(7, 0)),
+          "b001".U(3.W) -> Cat(Fill(16, io.master.r.bits.data(15)), io.master.r.bits.data(15, 0)),
+          "b010".U(3.W) -> io.master.r.bits.data(31, 0),
+          "b100".U(3.W) -> Cat(0.U(24.W), io.master.r.bits.data(7, 0)),
+          "b101".U(3.W) -> Cat(0.U(16.W), io.master.r.bits.data(15, 0))
         )
       ),
       1.U -> alu.io.out,      // from ALU
@@ -117,16 +117,16 @@ class SingleCycleCPU(mIdWidth: Int, memAddrWidth: Int, memDataWidth: Int, instrB
  ct.io.BrLT := bc.io.BrLT
 
   // AXI Bus
-  io.bus_master.aw <> ct.io.aw
-  io.bus_master.w <> ct.io.w
-  io.bus_master.b <> ct.io.b
-  io.bus_master.ar <> ct.io.ar
-  io.bus_master.r <> ct.io.r
+  io.master.aw <> ct.io.aw
+  io.master.w <> ct.io.w
+  io.master.b <> ct.io.b
+  io.master.ar <> ct.io.ar
+  io.master.r <> ct.io.r
 
-  io.bus_master.ar.bits.addr  := alu.io.out
-  io.bus_master.aw.bits.addr := alu.io.out
-  io.bus_master.w.bits.data := rf.io.rdata(1)
-  io.bus_master.w.bits.strb := MuxLookup(opcode, 0.U,
+  io.master.ar.bits.addr  := alu.io.out
+  io.master.aw.bits.addr := alu.io.out
+  io.master.w.bits.data := rf.io.rdata(1)
+  io.master.w.bits.strb := MuxLookup(opcode, 0.U,
   Seq(
     STORE -> (MuxLookup(
         funct3,
