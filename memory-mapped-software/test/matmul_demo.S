@@ -293,7 +293,11 @@ add t1, t1, t0
 li t2, 0x00000001
 sw t2, 0(t1)
 
-
+######################
+##                  ##
+##      Step 3      ##
+##                  ##
+######################
 ## ... executing matmul ...
 ## wait accelerator to finish computation
 wait_sa:
@@ -306,6 +310,11 @@ add t1, t1, t0
 lw t2, 0(t1)
 beq t2, x0, wait_sa
 
+######################
+##                  ##
+##      Step 4      ##
+##                  ##
+######################
 ## reset DONE reg in DMA
 sw x0, 0(t1)
 hcf
