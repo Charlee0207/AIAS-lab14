@@ -8,52 +8,26 @@ import chiseltest.ChiselScalatestTester
 import chiseltest.simulator.WriteVcdAnnotation
 import chisel3.experimental.BundleLiterals._
 
-import acal_lab14.AXI._
 import Config._
+import Utils.AXITester
 
-class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
-    // Functions for generating test vectors
-    def genAXIarSignals(addr: BigInt): Axi4Request = {
-        var res = (new Axi4Request(AXI_Config.s_id_width, AXI_Config.addr_width, AXI_Config.data_width)).Lit(
-           _.addr -> addr.U,
-            _.burst -> 0.U, // burst mode : FIXED
-            _.cache -> 0.U,
-            _.id    -> 1.U, // avoid using zero
-            _.len   -> 0.U, // one beat for burst
-            _.lock  -> 0.U,
-            _.prot  -> 0.U,
-            _.qos   -> 0.U,
-            _.region -> 0.U,
-            _.size  -> "b010".U // 4 bytes for one beats
-        )
-        if (Constants.DEBUG)
-            println(s"[DEBUG] the generated ar signals : ${res}")
-        res
-    }
-
-    def genAXIrSignals(rdata: BigInt): Axi4ReadData = {
-        var res = (new Axi4ReadData(AXI_Config.s_id_width, AXI_Config.data_width)).Lit(
-            _.id -> 1.U, // avoid using zero id
-            _.data -> rdata.U,
-            _.resp -> 0.U,
-            _.last -> true.B,
-        )
-        if (Constants.DEBUG)
-            println(s"[DEBUG] the generated r signals : ${res}")
-        res
-    }
-
+class AXISlaveReadMuxTest extends AnyFlatSpec
+    with ChiselScalatestTester
+    with AXITester {
+        val idWidth = AXI_TestConfig.s_id_width
+        val addrWidth = AXI_TestConfig.addr_width
+        val dataWidth = AXI_TestConfig.data_width
     "Master" should "Read addr from bus & Read data from slave device" in {
         test(new AXISlaveReadMux(
-            AXI_Config.master_num,
-            AXI_Config.s_id_width,
-            AXI_Config.addr_width,
-            AXI_Config.data_width,
+            AXI_TestConfig.nMasters,
+            AXI_TestConfig.s_id_width,
+            AXI_TestConfig.addr_width,
+            AXI_TestConfig.data_width,
         )).withAnnotations(Seq(
             WriteVcdAnnotation,
         )){ dut =>
             /* Initialize IO ports */
-            for (i <- 0 until AXI_Config.master_num) {
+            for (i <- 0 until AXI_TestConfig.nMasters) {
                 // input port
                 dut.io.in(i).readAddr.initSource().setSourceClock(dut.clock)
 
@@ -71,12 +45,12 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
             
             fork{
                 // Check if the address read from slave is the same as the address from master0
-                dut.io.out.readAddr.expectDequeue(genAXIarSignals(BigInt("1234", 16)))
+                dut.io.out.readAddr.expectDequeue(genAXIAddr(BigInt("1234", 16)))
                 // Check if the data read from master 0 is the same as the data from slave
-                dut.io.in(0).readData.expectDequeue(genAXIrSignals(BigInt("4321", 16)))
+                dut.io.in(0).readData.expectDequeue(genAXIReadData(0, BigInt("4321", 16), true))
             }.fork{
-                dut.io.in(0).readAddr.enqueue(genAXIarSignals(BigInt("1234", 16)))
-                dut.io.out.readData.enqueue(genAXIrSignals(BigInt("4321", 16)))   // Gen resp data from slave
+                dut.io.in(0).readAddr.enqueue(genAXIAddr(BigInt("1234", 16)))
+                dut.io.out.readData.enqueue(genAXIReadData(0, BigInt("4321", 16), true))   // Gen resp data from slave
             }.join()
 
             dut.clock.step(1)
@@ -88,12 +62,12 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
 
             fork{
                 // Check if the address read from slave is the same as the address from master0
-                dut.io.out.readAddr.expectDequeue(genAXIarSignals(BigInt("5678", 16)))
+                dut.io.out.readAddr.expectDequeue(genAXIAddr(BigInt("5678", 16)))
                 // Check if the data read from master 0 is the same as the data from slave
-                dut.io.in(1).readData.expectDequeue(genAXIrSignals(BigInt("8765", 16)))
+                dut.io.in(1).readData.expectDequeue(genAXIReadData(0, BigInt("8765", 16), true))
             }.fork{
-                dut.io.in(1).readAddr.enqueue(genAXIarSignals(BigInt("5678", 16)))
-                dut.io.out.readData.enqueue(genAXIrSignals(BigInt("8765", 16)))   // Gen resp data from slave
+                dut.io.in(1).readAddr.enqueue(genAXIAddr(BigInt("5678", 16)))
+                dut.io.out.readData.enqueue(genAXIReadData(0, BigInt("8765", 16), true))   // Gen resp data from slave
             }.join()
 
             dut.clock.step(1)
@@ -110,16 +84,16 @@ class AXISlaveReadMuxTest extends AnyFlatSpec with ChiselScalatestTester{
             dut.io.in(1).readData.ready.poke(true.B)
 
             fork{
-                dut.io.in(0).readAddr.enqueue(genAXIarSignals(BigInt("aaaa", 16)))
-                dut.io.in(0).readAddr.enqueue(genAXIarSignals(BigInt("cccc", 16)))
+                dut.io.in(0).readAddr.enqueue(genAXIAddr(BigInt("aaaa", 16)))
+                dut.io.in(0).readAddr.enqueue(genAXIAddr(BigInt("cccc", 16)))
             }.fork{
-                dut.io.in(1).readAddr.enqueue(genAXIarSignals(BigInt("bbbb", 16)))
-                dut.io.in(1).readAddr.enqueue(genAXIarSignals(BigInt("dddd", 16)))
+                dut.io.in(1).readAddr.enqueue(genAXIAddr(BigInt("bbbb", 16)))
+                dut.io.in(1).readAddr.enqueue(genAXIAddr(BigInt("dddd", 16)))
             }.fork{
-                dut.io.out.readData.enqueue(genAXIrSignals(BigInt("6666", 16)))
-                dut.io.out.readData.enqueue(genAXIrSignals(BigInt("7777", 16)))
-                dut.io.out.readData.enqueue(genAXIrSignals(BigInt("8888", 16)))
-                dut.io.out.readData.enqueue(genAXIrSignals(BigInt("9999", 16)))
+                dut.io.out.readData.enqueue(genAXIReadData(0, BigInt("6666", 16), true))
+                dut.io.out.readData.enqueue(genAXIReadData(0, BigInt("7777", 16), true))
+                dut.io.out.readData.enqueue(genAXIReadData(0, BigInt("8888", 16), true))
+                dut.io.out.readData.enqueue(genAXIReadData(0, BigInt("9999", 16), true))
             }.fork
                 .withRegion(Monitor){
                     while(!(dut.io.in(0).readData.valid.peek().litToBoolean | dut.io.in(1).readData.valid.peek().litToBoolean))

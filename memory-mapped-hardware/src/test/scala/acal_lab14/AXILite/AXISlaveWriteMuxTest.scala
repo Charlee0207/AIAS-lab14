@@ -8,61 +8,26 @@ import chiseltest.ChiselScalatestTester
 import chiseltest.simulator.WriteVcdAnnotation
 import chisel3.experimental.BundleLiterals._
 
-import acal_lab14.AXI._
 import Config._
+import Utils.AXITester
 
-class AXISlaveWriteMuxTest extends AnyFlatSpec with ChiselScalatestTester{
-    // Functions for generating test vectors
-     def genAXIawSignals(addr: BigInt): Axi4Request = {
-        var res = (new Axi4Request(AXI_Config.s_id_width, AXI_Config.addr_width, AXI_Config.data_width)).Lit(
-            _.addr -> addr.U,
-            _.burst -> 0.U, // Burst mode : FIXED
-            _.cache -> 0.U,
-            _.id    -> 1.U, // Avoid using zero id
-            _.len   -> 0.U, // one beat in a burst
-            _.lock  -> 0.U,
-            _.prot  -> 0.U,
-            _.qos   -> 0.U,
-            _.region -> 0.U,
-            _.size  -> "b010".U // 4 bytes per beat
-        )
-        if(Constants.DEBUG)
-            println(s"[DEBUG] the generated aw signals : ${res}")
-        res
-    }
-
-    def genAXIwSignals(wdata: BigInt): Axi4WriteData = {
-        var res = (new Axi4WriteData(AXI_Config.data_width)).Lit(
-            _.data -> wdata.U,
-            _.strb -> "h0F".U,
-            _.last   -> true.B,
-        )
-        if(Constants.DEBUG)
-            println(s"[DEBUG] the generated w signals : ${res}")
-        res
-    }
-
-    def genAXIbSignals(): Axi4WriteResp = {
-        var res = (new Axi4WriteResp(AXI_Config.s_id_width)).Lit(
-            _.id -> 1.U,
-            _.resp -> 0.U
-        )
-        if(Constants.DEBUG)
-            println(s"[DEBUG] the generated b signals : ${res}")
-        res
-    }    
-
+class AXISlaveWriteMuxTest extends AnyFlatSpec
+    with ChiselScalatestTester
+    with AXITester {
+        val idWidth = AXI_TestConfig.s_id_width
+        val addrWidth = AXI_TestConfig.addr_width
+        val dataWidth = AXI_TestConfig.data_width  
     "Master" should "Write addr to bus & Write data to slave device" in {
         test(new AXISlaveWriteMux(
-            AXI_Config.master_num,
-            AXI_Config.s_id_width,
-            AXI_Config.addr_width,
-            AXI_Config.data_width,
+            AXI_TestConfig.nMasters,
+            AXI_TestConfig.s_id_width,
+            AXI_TestConfig.addr_width,
+            AXI_TestConfig.data_width,
         )).withAnnotations(Seq(
             WriteVcdAnnotation,
         )){ dut =>
             /* Initialize IO ports */
-            for (i <- 0 until AXI_Config.master_num) {
+            for (i <- 0 until AXI_TestConfig.nMasters) {
                 // input port
                 dut.io.in(i).writeAddr.initSource().setSourceClock(dut.clock)
                 dut.io.in(i).writeData.initSource().setSourceClock(dut.clock)
@@ -81,22 +46,22 @@ class AXISlaveWriteMuxTest extends AnyFlatSpec with ChiselScalatestTester{
             
             dut.clock.step(1)
             fork{
-                dut.io.out.writeAddr.expectDequeue(genAXIawSignals(BigInt("1234", 16)))
+                dut.io.out.writeAddr.expectDequeue(genAXIAddr(BigInt("1234", 16)))
             }.fork{
-                dut.io.out.writeData.expectDequeue(genAXIwSignals(BigInt("4321", 16)))
+                dut.io.out.writeData.expectDequeue(genAXIWriteData(0, BigInt("4321", 16), "b1111", true))
             }.fork{
-                dut.io.in(0).writeResp.expectDequeue(genAXIbSignals())
+                dut.io.in(0).writeResp.expectDequeue(genAXIWriteResp(0))
             }.fork{
-                dut.io.in(0).writeAddr.enqueue(genAXIawSignals(BigInt("1234", 16)))
+                dut.io.in(0).writeAddr.enqueue(genAXIAddr(BigInt("1234", 16)))
             }.fork{
-                dut.io.in(0).writeData.enqueue(genAXIwSignals(BigInt("4321", 16)))
+                dut.io.in(0).writeData.enqueue(genAXIWriteData(0, BigInt("4321", 16), "b1111", true))
             }.fork{
                 fork.withRegion(Monitor){
                     while(!dut.io.out.writeAddr.valid.peek().litToBoolean || !dut.io.out.writeData.valid.peek().litToBoolean){
                         dut.clock.step(1)
                     }
                 }.joinAndStep(dut.clock)
-                dut.io.out.writeResp.enqueue(genAXIbSignals())
+                dut.io.out.writeResp.enqueue(genAXIWriteResp(0))
             }.join()
             dut.clock.step(1)
 
@@ -105,22 +70,22 @@ class AXISlaveWriteMuxTest extends AnyFlatSpec with ChiselScalatestTester{
             println("[Test 2]: Send address 0x5678 & data 0x8765 from master 1 to slave")
 
             fork{
-                dut.io.out.writeAddr.expectDequeue(genAXIawSignals(BigInt("5678", 16)))
+                dut.io.out.writeAddr.expectDequeue(genAXIAddr(BigInt("5678", 16)))
             }.fork{
-                dut.io.out.writeData.expectDequeue(genAXIwSignals(BigInt("8765", 16)))
+                dut.io.out.writeData.expectDequeue(genAXIWriteData(0, BigInt("8765", 16), "b1111", true))
             }.fork{
-                dut.io.in(0).writeResp.expectDequeue(genAXIbSignals())
+                dut.io.in(0).writeResp.expectDequeue(genAXIWriteResp(0))
             }.fork{
-                dut.io.in(0).writeAddr.enqueue(genAXIawSignals(BigInt("5678", 16)))
+                dut.io.in(0).writeAddr.enqueue(genAXIAddr(BigInt("5678", 16)))
             }.fork{
-                dut.io.in(0).writeData.enqueue(genAXIwSignals(BigInt("8765", 16)))
+                dut.io.in(0).writeData.enqueue(genAXIWriteData(0, BigInt("8765", 16), "b1111", true))
             }.fork{
                 fork.withRegion(Monitor){
                     while(!dut.io.out.writeAddr.valid.peek().litToBoolean || !dut.io.out.writeData.valid.peek().litToBoolean){
                         dut.clock.step(1)
                     }
                 }.joinAndStep(dut.clock)
-                dut.io.out.writeResp.enqueue(genAXIbSignals())
+                dut.io.out.writeResp.enqueue(genAXIWriteResp(0))
             }.join()
             dut.clock.step(1)
 
@@ -137,23 +102,23 @@ class AXISlaveWriteMuxTest extends AnyFlatSpec with ChiselScalatestTester{
             dut.io.out.writeData.ready.poke(true.B)
 
             fork{
-                dut.io.in(0).writeAddr.enqueue(genAXIawSignals(BigInt("aaaa", 16)))
-                dut.io.in(0).writeAddr.enqueue(genAXIawSignals(BigInt("cccc", 16)))
+                dut.io.in(0).writeAddr.enqueue(genAXIAddr(BigInt("aaaa", 16)))
+                dut.io.in(0).writeAddr.enqueue(genAXIAddr(BigInt("cccc", 16)))
             }.fork{
-                dut.io.in(1).writeAddr.enqueue(genAXIawSignals(BigInt("bbbb", 16)))
-                dut.io.in(1).writeAddr.enqueue(genAXIawSignals(BigInt("dddd", 16)))
+                dut.io.in(1).writeAddr.enqueue(genAXIAddr(BigInt("bbbb", 16)))
+                dut.io.in(1).writeAddr.enqueue(genAXIAddr(BigInt("dddd", 16)))
             }.fork{
-                dut.io.in(0).writeData.enqueue(genAXIwSignals(BigInt("6666", 16)))
-                dut.io.in(0).writeData.enqueue(genAXIwSignals(BigInt("7777", 16)))
+                dut.io.in(0).writeData.enqueue(genAXIWriteData(0, BigInt("6666", 16), "b1111", true))
+                dut.io.in(0).writeData.enqueue(genAXIWriteData(0, BigInt("7777", 16), "b1111", true))
             }.fork{
-                dut.io.in(1).writeData.enqueue(genAXIwSignals(BigInt("8888", 16)))
-                dut.io.in(1).writeData.enqueue(genAXIwSignals(BigInt("9999", 16)))
+                dut.io.in(1).writeData.enqueue(genAXIWriteData(0, BigInt("8888", 16), "b1111", true))
+                dut.io.in(1).writeData.enqueue(genAXIWriteData(0, BigInt("9999", 16), "b1111", true))
             }.fork{
-                dut.io.in(0).writeResp.expectDequeue(genAXIbSignals())
-                dut.io.in(0).writeResp.expectDequeue(genAXIbSignals())
+                dut.io.in(0).writeResp.expectDequeue(genAXIWriteResp(0))
+                dut.io.in(0).writeResp.expectDequeue(genAXIWriteResp(0))
             }.fork{
-                dut.io.in(1).writeResp.expectDequeue(genAXIbSignals())
-                dut.io.in(1).writeResp.expectDequeue(genAXIbSignals())
+                dut.io.in(1).writeResp.expectDequeue(genAXIWriteResp(0))
+                dut.io.in(1).writeResp.expectDequeue(genAXIWriteResp(0))
             }.fork{
                 for(i <- 0 until 4){
                     fork.withRegion(Monitor){
@@ -162,7 +127,7 @@ class AXISlaveWriteMuxTest extends AnyFlatSpec with ChiselScalatestTester{
                             dut.clock.step(1)
                         }
                     }.joinAndStep(dut.clock)
-                    dut.io.out.writeResp.enqueue(genAXIbSignals())
+                    dut.io.out.writeResp.enqueue(genAXIWriteResp(0))
                 }
             }.fork
                 .withRegion(Monitor){
