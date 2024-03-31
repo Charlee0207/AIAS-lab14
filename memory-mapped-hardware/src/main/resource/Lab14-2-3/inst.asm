@@ -6,6 +6,7 @@ lui x18, 0x00000008
 addi x18, x18, 0x00000020
 lui x19, 0x00000008
 addi x19, x19, 0x00000034
+lw s3, 0(s3)
 lui x31, 0x00000008
 addi x31, x31, 0x00000038
 lw t0, 0(t6)
@@ -37,7 +38,7 @@ addi x31, x31, 0x00000064
 lw t1, 0(t6)
 add t1, t1, t0
 lw t2, 0(t1)
-beq t2, x0, wait_dma
+beq t2, x0, wait_dma1
 sw x0, 0(t1)
 lui x31, 0x00000008
 addi x31, x31, 0x00000038
@@ -71,7 +72,7 @@ addi x31, x31, 0x00000064
 lw t1, 0(t6)
 add t1, t1, t0
 lw t2, 0(t1)
-beq t2, x0, wait_dma
+beq t2, x0, wait_dma2
 sw x0, 0(t1)
 lui x31, 0x00000008
 addi x31, x31, 0x00000030
