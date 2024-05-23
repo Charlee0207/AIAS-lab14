@@ -440,11 +440,11 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 
 		case HCF:
 			binary = 0x0000000B;
-			dexit = true;
+			//dexit = true;
 			break;
 		case UNIMPL:
 		default:
-			printf("(Trans)Reached an unimplemented instruction!\n");
+			printf("(Trans)Reached an unimplemented instruction OR instructions are all translated !\n");
 			if (i.psrc)
 				printf("Instruction: %s\n", i.psrc);
 			// printf( "inst: %6d pc: %6d src line: %d\n", inst_cnt, pc, i.orig_line );
@@ -453,8 +453,7 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 			break;
 		}
 
-		if (i.psrc)
-			fprintf(inst_file, "%s\n", i.psrc);
+		if (i.psrc) fprintf(inst_file, "%s\n", i.psrc);
 
 		fprintf(mch_file, "%02x\n", (binary >> 0) & 0xff);
 		fprintf(mch_file, "%02x\n", (binary >> 8) & 0xff);
@@ -465,7 +464,21 @@ void translate_to_machine_code(uint8_t *mem, instr *imem, char *argv1)
 	}
 
 	// write "hcf" in the inst_file
-	fprintf(inst_file, "hcf");
+	fprintf(inst_file, "hcf\n");
+	fprintf(mch_file, "%02x\n", 0x00);
+	fprintf(mch_file, "%02x\n", 0x00);
+	fprintf(mch_file, "%02x\n", 0x00);
+	fprintf(mch_file, "%02x\n", 0x0B);
+
+	//write five "nop" instructions at the end of the inst_file
+	for(int t=0; t<5;t++)
+	{
+		fprintf(inst_file, "nop\n");
+		fprintf(mch_file, "%02x\n", 0x00);
+		fprintf(mch_file, "%02x\n", 0x00);
+		fprintf(mch_file, "%02x\n", 0x00);
+		fprintf(mch_file, "%02x\n", 0x00);
+	}
 
 	// write data to data.hex
 	write_data_hex(mem, data_file);

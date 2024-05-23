@@ -1411,12 +1411,13 @@ int main(int argc, char **argv)
 	parse(fin, mem, imem, memoff, labels, label_count, &src);
 	normalize_labels(imem, labels, label_count, &src);
 
+	translate_to_machine_code(mem, imem, argv[1]);
+	printf("translation done!\n");
 
 	execute(mem, imem, labels, label_count, start_immediate);
 	printf("Execution done!\n");
 
-	translate_to_machine_code(mem, imem, argv[1]);
-	printf("translation done!\n");
+	
 	// for(int i = 0; i < label_count; i++){
 	// 	printf("label %s locates in %d\n",labels[i].label,labels[i].loc);
 	// }
