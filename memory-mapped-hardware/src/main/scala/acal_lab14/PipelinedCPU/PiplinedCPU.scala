@@ -11,9 +11,7 @@ import acal_lab14.PipelinedCPU.opcode_map._
 import acal_lab14.PipelinedCPU.Memory._
 
 class PipelinedCPU(val mIdWidth: Int,val memAddrWidth: Int,val memDataWidth: Int, instrBinaryFile: String) extends Module {
-    val io = IO(new Bundle{
-        val CycleCount = Output(UInt(32.W))
-        
+    val io = IO(new Bundle{        
         //DataMem interface
         val DataMem = new MemIF_CPU(memAddrWidth, memDataWidth) 
 
@@ -40,6 +38,7 @@ class PipelinedCPU(val mIdWidth: Int,val memAddrWidth: Int,val memDataWidth: Int
         val WB_wdata = Output(UInt(32.W))
         val EXE_Jump = Output(Bool())
         val EXE_Branch = Output(Bool())
+        val Cycle_Count = Output(UInt(32.W))
 
         // For performance counter
         val mem_rd_req = Output(Bool())
@@ -48,9 +47,9 @@ class PipelinedCPU(val mIdWidth: Int,val memAddrWidth: Int,val memDataWidth: Int
     })
     // val 
 
-    val CycleCount = RegInit(0.U(32.W))
-    CycleCount := CycleCount + 1.U
-    io.CycleCount := CycleCount
+    val Cycle_Count = RegInit(0.U(32.W))
+    Cycle_Count := Cycle_Count + 1.U
+    io.Cycle_Count := Cycle_Count
 
     // InstMem
     val im = Module(new InstMem(memAddrWidth, instrBinaryFile))

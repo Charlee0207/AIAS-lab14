@@ -22,10 +22,8 @@ class topTest(dut: top) extends PeekPokeTester(dut) {
     var Flush_Count = 0
     /* Performance counter */
 
-    var counter = 0
-
     while (!peek(dut.io.Hcf)) {
-        var CycleCount = peek(dut.io.CycleCount).toInt
+        var Cycle_Count = peek(dut.io.Cycle_Count).toInt
         var PC_IF = peek(dut.io.IF_PC).toInt
         var PC_ID = peek(dut.io.ID_PC).toInt
         var PC_EXE = peek(dut.io.EXE_PC).toInt
@@ -50,7 +48,7 @@ class topTest(dut: top) extends PeekPokeTester(dut) {
         var EXE_Branch = peek(dut.io.EXE_Branch).toInt
 
         println(
-            s"[Counter] = ${counter}"
+            s"[Counter] = ${Cycle_Count}"
         )
         println(
           s"[PC_IF ]${"%8d".format(PC_IF)} [Inst] ${"%-25s".format(lines(PC_IF >> 2))} "
@@ -81,7 +79,6 @@ class topTest(dut: top) extends PeekPokeTester(dut) {
         println("==============================================")
 
         /* Performance counter */
-        Cycle_Count += 1 // Cycle
         if (Stall_MA == 0 && Stall_DH == 0) {
             Inst_Count += 1 // Not Stall, read inst
 
@@ -105,7 +102,6 @@ class topTest(dut: top) extends PeekPokeTester(dut) {
         /* Performance counter */
 
         step(1)
-        counter += 1
     }
     step(1)
     println("Inst:Hcf")

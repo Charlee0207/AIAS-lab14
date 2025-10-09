@@ -1,4 +1,4 @@
-package acal_lab14.topSystolicArray
+package acal_lab14.topSystolicArraySingleCycleCPU
 
 import chisel3._
 import chiseltest._
@@ -36,99 +36,16 @@ class topTest extends AnyFlatSpec
             dut.io.tb_slave.r.initSink().setSinkClock(dut.clock)
             dut.io.tb_slave.b.initSink().setSinkClock(dut.clock)
 
-            /* Performance counter */
-            // var Cycle_Count = 0
-            var Inst_Count = 0
-            var Conditional_Branch_Count = 0
-            var Unconditional_Branch_Count = 0
-            var Conditional_Branch_Hit_Count = 0
-            var Unconditional_Branch_Hit_Count = 0
-            var Flush_Count = 0
-            /* Performance counter */
-
             while (!dut.io.Hcf.peek().litToBoolean) {
-                var Cycle_Count = dut.io.Cycle_Count.peek().litValue.toInt
-                var PC_IF = dut.io.IF_PC.peek().litValue.toInt
-                var PC_ID = dut.io.ID_PC.peek().litValue.toInt
-                var PC_EXE = dut.io.EXE_PC.peek().litValue.toInt
-                var PC_MEM = dut.io.MEM_PC.peek().litValue.toInt
-                var PC_WB = dut.io.WB_PC.peek().litValue.toInt
-
-                var E_BT = dut.io.E_Branch_taken.peek().litValue.toInt
-                var Flush = dut.io.Flush.peek().litValue.toInt
-                var Stall_MA = dut.io.Stall_MA.peek().litValue.toInt
-                var Stall_DH = dut.io.Stall_DH.peek().litValue.toInt
-                var alu_out = (dut.io.EXE_alu_out.peek().litValue.toInt.toHexString).replace(' ', '0')
-                var EXE_src1 = (dut.io.EXE_src1.peek().litValue.toInt.toHexString).replace(' ', '0')
-                var EXE_src2 = (dut.io.EXE_src2.peek().litValue.toInt.toHexString).replace(' ', '0')
-                var ALU_src1 = (dut.io.ALU_src1.peek().litValue.toInt.toHexString).replace(' ', '0')
-                var ALU_src2 = (dut.io.ALU_src2.peek().litValue.toInt.toHexString).replace(' ', '0')
-                var DM_rdata = (dut.io.rdata.peek().litValue.toInt.toHexString).replace(' ', '0')
-                var DM_raddr = (dut.io.raddr.peek().litValue.toInt.toHexString).replace(' ', '0')
-                var WB_reg = dut.io.WB_rd.peek().litValue.toInt
-                var WB_wdata = (dut.io.WB_wdata.peek().litValue.toInt.toHexString).replace(' ', '0')
-
-                var EXE_Jump = dut.io.EXE_Jump.peek().litValue.toInt
-                var EXE_Branch = dut.io.EXE_Branch.peek().litValue.toInt
-
-                println(
-                    s"[Cycle_Count] = ${Cycle_Count}"
-                )
-                println(
-                s"[PC_IF ]${"%8d".format(PC_IF)} [Inst] ${"%-25s".format(lines(PC_IF >> 2))} "
-                )
-                println(
-                s"[PC_ID ]${"%8d".format(PC_ID)} [Inst] ${"%-25s".format(lines(PC_ID >> 2))} "
-                )
-                println(
-                s"[PC_EXE]${"%8d".format(PC_EXE)} [Inst] ${"%-25s".format(lines(PC_EXE >> 2))} " +
-                    s"[EXE src1]${"%8s".format(EXE_src1)} [EXE src2]${"%8s".format(EXE_src2)} " +
-                    s"[Br taken] ${"%1d".format(E_BT)} "
-                )
-                println(
-                s"                                                  " +
-                    s"[ALU src1]${"%8s".format(ALU_src1)} [ALU src2]${"%8s".format(ALU_src2)} " +
-                    s"[ALU Out]${"%8s".format(alu_out)}"
-                )
-                println(
-                s"[PC_MEM]${"%8d".format(PC_MEM)} [Inst] ${"%-25s".format(lines(PC_MEM >> 2))} " +
-                    s"[DM Raddr]${"%8s".format(DM_raddr)} [DM Rdata]${"%8s".format(DM_rdata)}"
-                )
-                println(
-                s"[PC_WB ]${"%8d".format(PC_WB)} [Inst] ${"%-25s".format(lines(PC_WB >> 2))} " +
-                    s"[ WB reg ]${"%8d".format(WB_reg)} [WB  data]${"%8s".format(WB_wdata)}"
-                )
-                println(s"[Flush ] ${"%1d".format(Flush)} [Stall_MA ] ${"%1d"
-                    .format(Stall_MA)} [Stall_DH ] ${"%1d".format(Stall_DH)} ")
-                println("==============================================")
-
-                /* Performance counter */
-                if (Stall_MA == 0 && Stall_DH == 0) {
-                    Inst_Count += 1 // Not Stall, read inst
-
-                    if (EXE_Branch == 1) {
-                        Conditional_Branch_Count += 1
-                        if (Flush == 0) {
-                        Conditional_Branch_Hit_Count += 1
-                        } else {
-                        Flush_Count += 1
-                        }
-                    }
-                    if (EXE_Jump == 1) {
-                        Unconditional_Branch_Count += 1
-                        if (Flush == 0) {
-                        Unconditional_Branch_Hit_Count += 1
-                        } else {
-                        Flush_Count += 1
-                        }
-                    }
-                }
-                /* Performance counter */
-
+                var current_pc = dut.io.pc.peek().litValue.toInt
+                println("Cycle: " + dut.io.cycle_count.peek().toString)
+                println("PC: " + dut.io.pc.peek().toString)
+                println("Inst: " + lines(current_pc >> 2))
+                println("==============================")
                 dut.clock.step(1)
             }
 
-            println("Cycle: " + dut.io.Cycle_Count.peek().toString)
+            println("Cycle: " + dut.io.cycle_count.peek().toString)
             println("Inst: Hcf")
             println("This is the end of the program!!")
             println("==============================")

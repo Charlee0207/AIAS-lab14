@@ -43,7 +43,7 @@ class top extends Module {
         val EXE_Jump = Output(Bool())
         val EXE_Branch = Output(Bool())
 
-        val CycleCount = Output(UInt(32.W))
+        val Cycle_Count = Output(UInt(32.W))
 
         // val arDone = Output(Bool())
         // val rDone = Output(Bool())
@@ -65,7 +65,7 @@ class top extends Module {
     val cpu_axi_if = Module(new CPU_AXI_IF(Lab14_2_2_Config.s_id_width, Lab14_2_2_Config.addr_width, Lab14_2_2_Config.data_width))
 
     // CPU (MemIF) <=> CPU_AXI_IF <=> AXI BUS <=> DataMem
-    // CPU (MemIF)<=> CPU_AXI_IF
+    // CPU (MemIF) <=> CPU_AXI_IF
     cpu_axi_if.io.Mem_R         := cpu.io.DataMem.Mem_R
     cpu_axi_if.io.Mem_W         := cpu.io.DataMem.Mem_W
     cpu_axi_if.io.Length        := cpu.io.DataMem.Length
@@ -91,7 +91,7 @@ class top extends Module {
     // dm.io.dump := io.Dump_Mem
 
     // Initialization
-    io.CycleCount := cpu.io.CycleCount
+    io.Cycle_Count := cpu.io.Cycle_Count
     io.E_Branch_taken := cpu.io.E_Branch_taken
     io.Flush := cpu.io.Flush
     io.Stall_MA := cpu.io.Stall_MA

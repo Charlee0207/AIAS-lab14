@@ -162,4 +162,9 @@ lw x28, 92(x3)
 lw x29, 96(x3)
 lw x30, 100(x3)
 lw x31, 104(x3)
+nop
+nop
+nop
+nop
+nop
 hcf
