@@ -52,6 +52,14 @@ object Lab14_2_2_Config {
     val instr_asm_path = "src/main/resource/Lab14-2-2/inst.asm"
     val instr_hex_path = "src/main/resource/Lab14-2-2/m_code.hex"
     val data_hex_path  = "src/main/resource/Lab14-2-2/data.hex"
+
+    // val instr_asm_path = "src/main/resource/Lab9-fib/inst.asm"
+    // val instr_hex_path = "src/main/resource/Lab9-fib/m_code.hex"
+    // val data_hex_path  = "src/main/resource/Lab9-fib/data.hex"
+
+    // val instr_asm_path = "src/main/resource/Lab9-kadane/inst.asm"
+    // val instr_hex_path = "src/main/resource/Lab9-kadane/m_code.hex"
+    // val data_hex_path  = "src/main/resource/Lab9-kadane/data.hex"
     val data_mem_size  = 16
 }
 
