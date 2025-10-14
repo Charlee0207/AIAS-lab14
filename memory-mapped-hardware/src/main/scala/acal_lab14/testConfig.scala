@@ -88,3 +88,48 @@ object Lab14_2_3_Config {
     val Mem_Base_ADDR  = 0x200000           // Local mem base address
     val Dma_Base_ADDR  = 0x300000           // DMA base address
 }
+
+
+/* ---------------------------+
+ * Configuration for HW14-1   |
+ * ---------------------------+
+ */
+object HW14_1_Config {
+    // addr_map -> a list contains 3 allocation in memory space -> means there are 3 slaves
+    // 0x8000   + 0x8000   = 0x10000    (DataMem)
+    // 0x100000 + 0x100000 = 0x200000   (SA RegFile)
+    val addr_map       = List((Integer.parseInt("8000",16), Integer.parseInt("8000",16)),
+                              (Integer.parseInt("100000",16), Integer.parseInt("200000",16)))
+    val nMasters       = 2                  // number of master
+    val nSlaves        = addr_map.length    // number of slave
+    val s_id_width     = 17                 // id width
+    val addr_width     = 32                 // address width on bus
+    val data_width     = 32                 // data width on bus
+    val reg_width      = 32                 // reg width of MMIO_Regfile
+    val instr_asm_path = "src/main/resource/HW14_1/inst.asm"
+    val instr_hex_path = "src/main/resource/HW14_1/m_code.hex"
+    val data_hex_path  = "src/main/resource/HW14_1/data.hex"
+    val data_mem_size  = 16                 // power of 2 in byte (2^16 bytes DataMem)
+    val Mem_Base_ADDR  = 0x200000           // Local mem base address
+    // val Dma_Base_ADDR  = 0x300000           // DMA base address
+}
+
+
+/* ---------------------------+
+ * Configuration for HW14-2   |
+ * ---------------------------+
+ */
+object HW14_2_Config {
+    // addr_map -> a list contains 3 allocation in memory space -> means there are 3 slaves
+    // 0x000000 + 0x100000 = 0x100000   (slave 0)
+    // 0x100000 + 0x100000 = 0x200000   (slave 1)
+    // 0x200000 + 0x100000 = 0x300000   (slave 2)
+    val addr_map       = List((Integer.parseInt("0"     ,16), Integer.parseInt("100000",16)),
+                              (Integer.parseInt("100000",16), Integer.parseInt("100000",16)),
+                              (Integer.parseInt("200000",16), Integer.parseInt("100000",16)))
+    val nMasters       = 3                  // number of master
+    val nSlaves        = addr_map.length    // number of slave
+    val s_id_width     = 17                 // id width
+    val addr_width     = 32                 // address width on bus
+    val data_width     = 32                 // data width on bus
+}

@@ -14,6 +14,8 @@ import Config._
   */
 class topSA(s_id_width: Int, addr_width: Int, data_width: Int, reg_width: Int, sa_mem_size: Int) extends Module {
   val io = IO(new Bundle {
+    // master interface for connecting to AXI bus
+    val master = new Axi4MasterIF(s_id_width, addr_width, data_width)
     // slave interface for connecting to AXI bus
     val slave = new Axi4SlaveIF(s_id_width, addr_width, data_width)
     val tb_slave = new Axi4SlaveIF(s_id_width, addr_width, data_width)
@@ -25,6 +27,7 @@ class topSA(s_id_width: Int, addr_width: Int, data_width: Int, reg_width: Int, s
   val mm = Module(new Memory_Mapped(sa_mem_size, s_id_width, addr_width, data_width, reg_width))
 
   // module wiring
+  io.master <> mm.io.master
   io.slave <> mm.io.slave
   mm.io.mmio <> sa.io.mmio
 

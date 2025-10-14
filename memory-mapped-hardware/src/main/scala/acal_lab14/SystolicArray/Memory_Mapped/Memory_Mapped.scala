@@ -17,6 +17,8 @@ import Config._
   */
 class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width: Int, reg_width: Int) extends Module {
   val io = IO(new Bundle {
+    // for SA to access the DataMem
+    val master = new Axi4MasterIF(s_id_width, addr_width, data_width)
     // for CPU to access the Reg and Memory
     val slave = new Axi4SlaveIF(s_id_width, addr_width, data_width)
     val tb_slave = new Axi4SlaveIF(s_id_width, addr_width, data_width)
@@ -64,12 +66,65 @@ class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width:
   io.slave.b.bits.id   := 0.U // always assign 0, don't care in AXI4 Lite protocol
   io.slave.b.bits.resp := 0.U // "b00".U -> OKAY
 
+// ========== DMA part begin ==========
+  // Master state machine
+  val mIdle :: mReadSend :: mReadResp :: mWriteSend :: mDone :: Nil = Enum(5)
+  val mState  = RegInit(mIdle)
+
+  // Data buffer
+  val data_buffer = RegInit(0.U(data_width.W))
+  val rData_mask = WireDefault(0.U(4.W))
+  val mask_width = WireDefault(0.U(4.W))
+  val source_offset = RegInit(0.U(2.W))
+  val rData  = WireDefault(VecInit(Seq.fill(4)(0.U(8.W))))
+  val dest_offset = WireDefault(io.master.aw.bits.addr(1,0))
+  
+  // Total number of requests counter
+  val request_counter = RegInit(0.U(32.W))
+
+  // Master
+  io.master.aw.valid       := false.B // Only read port is used in SA
+  io.master.aw.bits.addr   := 0.U
+  io.master.aw.bits.burst  := 0.U
+  io.master.aw.bits.len    := 0.U
+  io.master.aw.bits.size   := 2.U
+  io.master.aw.bits.cache  := 0.U
+  io.master.aw.bits.id     := 0.U
+  io.master.aw.bits.prot   := 0.U
+  io.master.aw.bits.lock   := 0.U
+  io.master.aw.bits.qos    := 0.U
+  io.master.aw.bits.region := 0.U
+
+  io.master.ar.valid       := mState === mReadSend
+  io.master.ar.bits.addr   := 0.U
+  io.master.ar.bits.burst  := 0.U
+  io.master.ar.bits.len    := 0.U
+  io.master.ar.bits.size   := 2.U
+  io.master.ar.bits.cache  := 0.U
+  io.master.ar.bits.id     := 0.U
+  io.master.ar.bits.prot   := 0.U
+  io.master.ar.bits.lock   := 0.U
+  io.master.ar.bits.qos    := 0.U
+  io.master.ar.bits.region := 0.U
+
+  io.master.w.valid     := false.B // Only read port is used in SA
+  io.master.w.bits.data := 0.U
+  io.master.w.bits.strb := "b1111".U
+  io.master.w.bits.last := true.B
+
+  io.master.r.ready := mState === mReadResp
+
+  io.master.b.ready := false.B // Only read port is used in SA
+
+// ========== DMA part end ==========
+
   // rf wiring and default value
   rf.io.mmio <> io.mmio
   rf.io.raddr := 0.U
   rf.io.waddr := 0.U
   rf.io.wdata := 0.U
   rf.io.wen   := false.B
+  rf.io.transfer_done := false.B
 
   // lm wiring and default value
   lm.io.raddr := 0.U
@@ -122,9 +177,33 @@ class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width:
    * request at the same cycle.
    */
 
-  // * read/write will be divided into two parts -> CPU or SA dominated
-  // * CPU dominated -> when io.mmio.ENABLE_OUT := false.B -> SA is idle now
-  when(!io.mmio.ENABLE_OUT) {
+  // * read/write will be divided into three parts -> CPU, MM(data transfer) or SA dominated
+  // * MM dominated -> when io.mmio.LOAD_EN := true.B -> MM is programed to transfer data now
+  when(io.mmio.LOAD_EN) {
+    // Write to LocalMem when DMA read response
+    when(mState === mWriteSend){
+      // Reset mmio regfiles at the end of DMA
+      when(request_counter === io.mmio.SIZE_CFG(7,0)-1.U){
+        rf.io.transfer_done := true.B
+      }
+
+      // Write to LocalMem when DMA read response
+      when(io.mmio.DST_INFO >= "h200000".U && io.mmio.DST_INFO < "h300000".U) {
+        mask_width := MuxLookup(io.mmio.SIZE_CFG(15,8),"b1111".U,Seq(
+          1.U -> "b0001".U,
+          2.U -> "b0011".U,
+          3.U -> "b0111".U,
+          4.U -> "b1111".U
+        ))
+        lm.io.wen   := true.B
+        lm.io.waddr := io.mmio.DST_INFO(20, 0) + (request_counter * io.mmio.SIZE_CFG(23,16))   // Ignore the global address (2 of 0x200000) when writing LocalMem
+        lm.io.wstrb := mask_width << dest_offset
+        lm.io.wdata := data_buffer << (dest_offset << 3.U)
+      }
+    }
+  }
+  // * CPU dominated -> when io.mmio.ENABLE_OUT := false.B -> CPU programs SA configs
+  .elsewhen(!io.mmio.ENABLE_OUT) {
     // * read behavior
     RAReadyReg              := canDoRead
     io.slave.ar.ready       := RAReadyReg
@@ -179,8 +258,9 @@ class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width:
 
     WRValidReg               := DoWrite && !WRValidReg
     io.slave.b.valid         := WRValidReg
-  }.otherwise {
-    // * SA dominated -> when io.mmio.ENABLE_OUT === false.B
+  }
+  // * SA dominated -> when io.mmio.ENABLE_OUT === true.B -> SA access LocalMem and regfiles
+  .elsewhen(io.mmio.ENABLE_OUT) {
     // reset all registers for CPU dominated
     RAReg      := 0.U
     RAReadyReg := false.B
@@ -207,6 +287,64 @@ class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width:
     rf.io.mmio.ENABLE_IN := io.mmio.ENABLE_IN
     rf.io.mmio.STATUS_IN := io.mmio.STATUS_IN
   }
+
+// ========== DMA part begin ==========
+  // To handle the handshaking of master port
+  // Master State Controller
+  switch(mState) {
+    is(mIdle) {
+      when(io.mmio.LOAD_EN === 1.U) {
+        mState := mReadSend
+      }
+    }
+    is(mReadSend) {
+      when(io.master.ar.ready) {
+        mState := mReadResp
+      }
+    }
+    is(mReadResp) {
+      when(io.master.r.valid) {
+        mState := mWriteSend
+      }
+    }
+    is(mWriteSend) {  // Only write cycle is issued to write LocalMem
+      mState := Mux(request_counter === io.mmio.SIZE_CFG(7,0)-1.U, mDone, mIdle)
+    }
+    is(mDone) {
+      mState := mIdle
+    }
+  }
+
+  // Master State Datapath
+  when(mState === mWriteSend) {
+    request_counter := Mux(request_counter === io.mmio.SIZE_CFG(7,0)-1.U, 0.U, request_counter + 1.U)
+  }
+
+  when(mState === mReadSend) {
+    io.master.ar.bits.addr := io.mmio.SRC_INFO + (request_counter * io.mmio.SIZE_CFG(31,24))
+    source_offset := io.master.ar.bits.addr(1,0)
+  }
+
+  when(mState === mReadResp && io.master.r.valid) {
+    mask_width := MuxLookup(io.mmio.SIZE_CFG(15,8),"b1111".U,Seq(
+      1.U -> "b0001".U,
+      2.U -> "b0011".U,
+      3.U -> "b0111".U,
+      4.U -> "b1111".U
+    ))
+    rData_mask := mask_width << source_offset
+    List.range(0, 4).map { x =>
+      when(rData_mask(x) === 1.U) {
+        rData(x) := io.master.r.bits.data(x * 8 + 7, x * 8)
+      }
+      .otherwise {
+        rData(x) := 0.U(8.W)
+      }
+    }
+    data_buffer := rData.asUInt >> (source_offset << 3.U)
+  }
+// ========== DMA part end ==========
+
 
   // Testbench
   io.tb_slave.ar.ready := false.B
