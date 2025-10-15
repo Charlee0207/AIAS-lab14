@@ -141,7 +141,7 @@ lw s3, 0(s3)
 ## --------------------------------------------------------------
 ## SRC_INFO = 0x8000 + 0x0
 ## DST_INFO = 0x200000 + 0x0
-## SIZE_CFG = (0x4 << 24) + (0x4 << 16) + (0x4 << 8) + 0x4
+## SIZE_CFG = (0x10 << 24) + (0x10 << 16) + (0x10 << 8) + 0x10
 
 ## t0 -> 0x300000 (Base address of DMA registers)
 la t6, DMA_REG_BASE_ADDR
@@ -172,8 +172,8 @@ la t6, DMA_OFFSET_SIZE_CFG
 lw t1, 0(t6)
 ## t1 = 0x300000 + 0x0c
 add t1, t1, t0
-## store 0x04040404 into mem[0x30000c]
-li t2, 0x04040404
+## store 0x10101010 into mem[0x30000c]
+li t2, 0x10101010
 sw t2, 0(t1)
 
 ## 4. Enable DMA
@@ -202,9 +202,9 @@ sw x0, 0(t1)
 ## --------------------------------------------------------------+
 ## copy mat_B from shared data memory to local mem of accelerator|
 ## --------------------------------------------------------------+
-## SRC_INFO = 0x8000 + 0x4
-## DST_INFO = 0x200000 + 0x4
-## SIZE_CFG = (0x4 << 24) + (0x4 << 16) + (0x4 << 8) + 0x4
+## SRC_INFO = 0x8000 + 0x100
+## DST_INFO = 0x200000 + 0x100
+## SIZE_CFG = (0x10 << 24) + (0x10 << 16) + (0x10 << 8) + 0x10
 
 ## t0 -> 0x300000 (Base address of DMA registers)
 la t6, DMA_REG_BASE_ADDR
@@ -216,7 +216,7 @@ la t6, DMA_OFFSET_SOURCE_INFO
 lw t1, 0(t6)
 ## t1 = 0x300000 + 0x04
 add t1, t1, t0
-## store 0x8010 into mem[0x300004]
+## store 0x8100 into mem[0x300004]
 sw s1, 0(t1)
 
 ## 2. Program DEST_INFO reg
@@ -225,8 +225,8 @@ la t6, DMA_OFFSET_DEST_INFO
 lw t1, 0(t6)
 ## t1 = 0x300000 + 0x08
 add t1, t1, t0
-## store 0x200010 into mem[0x300008]
-addi t2, s3, 0x10
+## store 0x200100 into mem[0x300008]
+addi t2, s3, 0x100
 sw t2, 0(t1)
 
 ## 3. Program SIZE_CFG reg
@@ -235,8 +235,8 @@ la t6, DMA_OFFSET_SIZE_CFG
 lw t1, 0(t6)
 ## t1 = 0x300000 + 0x0c
 add t1, t1, t0
-## store 0x04040404 into mem[0x30000c]
-li t2, 0x04040404
+## store 0x10101010 into mem[0x30000c]
+li t2, 0x10101010
 sw t2, 0(t1)
 
 ## 4. Enable DMA
@@ -261,6 +261,12 @@ beq t2, x0, wait_dma2
 
 ## reset DONE reg in DMA
 sw x0, 0(t1)
+nop
+nop
+nop
+nop
+nop
+hcf
 ######################
 ##                  ##
 ##      Step 2      ##

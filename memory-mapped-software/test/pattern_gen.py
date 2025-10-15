@@ -1,9 +1,11 @@
 import numpy as np
 
 def gen_pattern_4x4():
+    np.random.seed(42)
     return np.random.randint(1, 5, (4, 4))
 
 def gen_pattern_16x16():
+    np.random.seed(42)
     return np.random.randint(1, 5, (16, 16))
 
 def gen_pattern_2x3():
@@ -23,9 +25,11 @@ def gen_pattern_3x2():
     return pattern
 
 def gen_pattern_4x4():
+    np.random.seed(42)
     return np.random.randint(1, 5, (4, 4))
 
 def gen_pattern_16x16():
+    np.random.seed(42)
     return np.random.randint(1, 5, (16, 16))
 
 def write_mat(filename, mat_A, mat_B, mat_C):
@@ -60,12 +64,13 @@ def write_assem(mat_A, mat_B, mat_C):
                     assem[-1] += (" 0x")
 
                 assem[-1] +=(f"{int(col):02x}")
-                count = (count + 1) % 4        
+                count = (count + 1) % 4  
+        return assem      
 
     assem = []
-    assem.append(write_sub_mat("mat_A", mat_A))
-    assem.append(write_sub_mat("mat_B", mat_B))
-    assem.append(write_sub_mat("mat_C", mat_C))
+    assem.extend(write_sub_mat("mat_A", mat_A))
+    assem.extend(write_sub_mat("mat_B", mat_B))
+    assem.extend(write_sub_mat("mat_C", mat_C))
     
     return assem
 

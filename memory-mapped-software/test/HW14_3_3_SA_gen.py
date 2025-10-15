@@ -1,17 +1,11 @@
 import pattern_gen 
 
-assem = []
 def data_gen():
-    # Matrix A, B, C
+    assem = []
     assem.append(".data")
-    mat_A, mat_B, mat_C = pattern_gen.gen_pattern_HW14_1()
-    assem.append(write_mat(mat_A, mat_B, mat_C))
-    mat_A, mat_B, mat_C = pattern_gen.gen_pattern_HW14_2()
-    assem.append(write_mat(mat_A, mat_B, mat_C))
     mat_A, mat_B, mat_C = pattern_gen.gen_pattern_HW14_3()
-    assem.append(write_mat(mat_A, mat_B, mat_C))
+    assem.extend(pattern_gen.write_assem(mat_A, mat_B, mat_C))
 
-    # Accelerator address
     assem.append("")
     assem.append("ACCEL_REG_BASE_ADDR:")
     assem.append(".word 0x100000")
@@ -56,13 +50,209 @@ def data_gen():
     assem.append(".word 0x38")
     assem.append("")
 
+    return assem
+
 def dma_assem_gen():
-    # Move mat_A to local memory
-    for i in range(4):
-        
+    assem = []
+    assem.append("######################")
+    assem.append("##                  ##")
+    assem.append("##   Data Transfer  ##")
+    assem.append("##                  ##")
+    assem.append("######################")
+    assem.append("")
+    assem.append("la s0, mat_A")
+    assem.append("la s1, mat_B")
+    assem.append("la s2, mat_C")
+    assem.append("la s3, ACCEL_MEM_BASE_ADDR")
+    assem.append("lw s3, 0(s3)")
+    assem.append("")
+    assem.append("## --------------------------------------------------------------")
+    assem.append("## copy mat_A from shared data memory to local mem of accelerator.")
+    assem.append("## --------------------------------------------------------------")
+    assem.append("la t6, ACCEL_REG_BASE_ADDR")
+    assem.append("lw t0, 0(t6)")
+    assem.append("")
+    assem.append("## 1. Program SRC_INFO reg")
+    assem.append("la t6, ACCEL_OFFSET_SRC_INFO")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("sw s0, 0(t1)")
+    assem.append("")
+    assem.append("## 2. Program DST_INFO reg")
+    assem.append("la t6, ACCEL_OFFSET_DST_INFO")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("sw s3, 0(t1)")
+    assem.append("")
+    assem.append("## 3. Program SIZE_CFG reg")
+    assem.append("la t6, ACCEL_OFFSET_SIZE_CFG")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("li t2, 0x10101010")
+    assem.append("sw t2, 0(t1)")
+    assem.append("")
+    assem.append("## 4. Enable ACCEL to move data")
+    assem.append("la t6, ACCEL_OFFSET_LOAD_EN")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("li t2, 0x01")
+    assem.append("sw t2, 0(t1)")
+    assem.append("")
+    assem.append("## ... moving data ...")
+    assem.append("wait_accel_transfer_a:")
+    assem.append("la t6, ACCEL_OFFSET_LOAD_DONE")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("lw t2, 0(t1)")
+    assem.append("beq t2, x0, wait_accel_transfer_a")
+    assem.append("")
+    assem.append("## reset LOAD_DONE reg in ACCEL")
+    assem.append("sw x0, 0(t1)")
+    assem.append("")
+    assem.append("")
+    assem.append("## --------------------------------------------------------------+")
+    assem.append("## copy mat_B from shared data memory to local mem of accelerator|")
+    assem.append("## --------------------------------------------------------------+")
+    assem.append("la t6, ACCEL_REG_BASE_ADDR")
+    assem.append("lw t0, 0(t6)")
+    assem.append("")
+    assem.append("## 1. Program SRC_INFO reg")
+    assem.append("la t6, ACCEL_OFFSET_SRC_INFO")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("sw s1, 0(t1)")
+    assem.append("")
+    assem.append("## 2. Program DST_INFO reg")
+    assem.append("la t6, ACCEL_OFFSET_DST_INFO")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("addi t2, s3, 0x100")
+    assem.append("sw t2, 0(t1)")
+    assem.append("")
+    assem.append("## 3. Program SIZE_CFG reg")
+    assem.append("la t6, ACCEL_OFFSET_SIZE_CFG")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("li t2, 0x10101010")
+    assem.append("sw t2, 0(t1)")
+    assem.append("")
+    assem.append("## 4. Enable ACCEL to move data")
+    assem.append("la t6, ACCEL_OFFSET_LOAD_EN")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("li t2, 0x01")
+    assem.append("sw t2, 0(t1)")
+    assem.append("")
+    assem.append("## ... moving data ...")
+    assem.append("wait_accel_transfer_b:")
+    assem.append("la t6, ACCEL_OFFSET_LOAD_DONE")
+    assem.append("lw t1, 0(t6)")
+    assem.append("add t1, t1, t0")
+    assem.append("lw t2, 0(t1)")
+    assem.append("beq t2, x0, wait_accel_transfer_b")
+    assem.append("")
+    assem.append("## reset LOAD_DONE reg in accel")
+    assem.append("sw x0, 0(t1)")
+    assem.append("")
+    assem.append("")
 
+    return assem
 
+def sa_assen_gen():
+    assem = []
+    assem.append("######################")
+    assem.append("##                  ##")
+    assem.append("##    Accelerator   ##")
+    assem.append("##                  ##")
+    assem.append("######################")
+    assem.append("")
+    assem.append("la t6, ACCEL_REG_BASE_ADDR")
+    assem.append("lw t0, 0(t6)")
 
+    mat_A_offset = 0x0
+    mat_B_offset = 0x100
+    mat_C_offset = 0x200
+    mat_A_stride = 0x10
+    mat_B_stride = 0x10
+    mat_C_stride = 0x10
+    mat_mem_stride = 0x00101010
+
+    for i in range(4): # row of mat_C
+        for j in range(4): # col of mat_C
+            for k in range(4): # a tile of mat_C is accumulated of 4 tiles
+                zero_psum = 1 if k == 0 else 0
+                assem.append("")
+                assem.append( "## -------------------------------------------------------------------------+")
+                assem.append(f"## Compute (i={i}, j={j}, k={k}) tile of 4x4 matrix multiplication in accelerator.|")
+                assem.append( "## -------------------------------------------------------------------------+")
+                assem.append("")
+                assem.append("## 1. Program MATA_MEM_ADDR reg")
+                assem.append("la t6, ACCEL_OFFSET_MATA_MEM_ADDR")
+                assem.append("lw t1, 0(t6)")
+                assem.append("add t1, t1, t0")
+                assem.append(f"li t2, 0x{(mat_A_offset + i * (mat_A_stride*4) + k * 0x4):x}")
+                assem.append("sw t2, 0(t1)")
+                assem.append("")
+                assem.append("## 2. Program MATB_MEM_ADDR reg")
+                assem.append("la t6, ACCEL_OFFSET_MATB_MEM_ADDR")
+                assem.append("lw t1, 0(t6)")
+                assem.append("add t1, t1, t0")
+                assem.append(f"li t2, 0x{(mat_B_offset + k * (mat_B_stride*4) + j * 0x4):x}")
+                assem.append("sw t2, 0(t1)")
+                assem.append("")
+                assem.append("## 3. Program MATC_MEM_ADDR reg")
+                assem.append("la t6, ACCEL_OFFSET_MATC_MEM_ADDR")
+                assem.append("lw t1, 0(t6)")
+                assem.append("add t1, t1, t0")
+                assem.append(f"li t2, 0x{(mat_C_offset + i * (mat_C_stride*4) + j * 0x4):x}")
+                assem.append("sw t2, 0(t1)")
+                assem.append("")
+                assem.append("## 4. Program MAT_MEM_STRIDE reg")
+                assem.append("la t6, ACCEL_OFFSET_MAT_MEM_STRIDE")
+                assem.append("lw t1, 0(t6)")
+                assem.append("add t1, t1, t0")
+                assem.append(f"li t2, 0x{mat_mem_stride:x}")
+                assem.append("sw t2, 0(t1)")
+                assem.append("")
+                assem.append("## 5. Set ZERO_PSUM reg")
+                assem.append("la t6, ACCEL_OFFSET_ZERO_PSUM")
+                assem.append("lw t1, 0(t6)")
+                assem.append("add t1, t1, t0")
+                assem.append(f"li t2, 0x0000000{zero_psum:x}")
+                assem.append("sw t2, 0(t1)")
+                assem.append("")
+                assem.append("## 6. Enable accelerator")
+                assem.append("la t6, ACCEL_OFFSET_ENABLE")
+                assem.append("lw t1, 0(t6)")
+                assem.append("add t1, t1, t0")
+                assem.append("li t2, 0x00000001")
+                assem.append("sw t2, 0(t1)")
+                assem.append("")
+                assem.append("## ... executing matmul ...")
+                assem.append(f"wait_sa_{i}_{j}_{k}:")
+                assem.append("la t6, ACCEL_OFFSET_STATUS")
+                assem.append("lw t1, 0(t6)")
+                assem.append("add t1, t1, t0")
+                assem.append("lw t2, 0(t1)")
+                assem.append(f"beq t2, x0, wait_sa_{i}_{j}_{k}")
+                assem.append("")
+                assem.append("## 7. Reset STATUS reg in ACCEL")
+                assem.append("sw x0, 0(t1)")
+                assem.append("")
+
+    return assem
+
+def main():
+    assem = []
+    assem.extend(data_gen())
+    assem.append(".text")
+    assem.extend(dma_assem_gen())
+    assem.extend(sa_assen_gen())
+    assem.append("hcf")
+    
+    with open("HW14_3_3_SA.S", "w") as f:
+        for code in assem:
+            f.write(f"{code}\n")
 
 if __name__ == "__main__":
-    data_gen()
+    main()

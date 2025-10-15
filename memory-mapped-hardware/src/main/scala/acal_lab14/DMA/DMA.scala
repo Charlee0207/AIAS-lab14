@@ -192,17 +192,17 @@ class DMA(idWidth: Int, addrWidth: Int, dataWidth: Int, baseAddr: BigInt)
   // Master State Datapath
   when(mState === mWriteSend) {
     when(io.master.aw.fire) {
-      request_counter := request_counter + 1.U
+      request_counter :=  request_counter + 1.U
     }
   }
 
   when(mState === mReadSend) {
-    io.master.ar.bits.addr := mmio_source_info + (request_counter * mmio_size_cfg(31,24))
+    io.master.ar.bits.addr := mmio_source_info + ((request_counter/(mmio_size_cfg(15,8)>>2)) * mmio_size_cfg(31,24)) + ((request_counter%(mmio_size_cfg(15,8)>>2))<<2)
     source_offset := io.master.ar.bits.addr(1,0)
   }
 
   when(mState === mWriteSend) {
-    io.master.aw.bits.addr := mmio_dest_info + (request_counter * mmio_size_cfg(23,16))
+    io.master.aw.bits.addr := mmio_dest_info + ((request_counter/(mmio_size_cfg(15,8)>>2)) * mmio_size_cfg(23,16)) + ((request_counter%(mmio_size_cfg(15,8)>>2))<<2)
     mask_width := MuxLookup(mmio_size_cfg(15,8),"b1111".U,Seq(
       1.U -> "b0001".U,
       2.U -> "b0011".U,
@@ -233,7 +233,7 @@ class DMA(idWidth: Int, addrWidth: Int, dataWidth: Int, baseAddr: BigInt)
     data_buffer := rData.asUInt >> (source_offset << 3.U)
   }
 
-  when(mState === mWriteResp && request_counter === mmio_size_cfg(7,0)) {
+  when(mState === mWriteResp && request_counter === mmio_size_cfg(7,0)*(mmio_size_cfg(15,8)>>2)) {
     request_counter := 0.U
     mmio_enable := 0.U
     mmio_done   := 1.U

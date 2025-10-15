@@ -183,7 +183,7 @@ class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width:
     // Write to LocalMem when DMA read response
     when(mState === mWriteSend){
       // Reset mmio regfiles at the end of DMA
-      when(request_counter === io.mmio.SIZE_CFG(7,0)-1.U){
+      when(request_counter === io.mmio.SIZE_CFG(7,0)*(io.mmio.SIZE_CFG(15,8)>>2)-1.U){ // height * width
         rf.io.transfer_done := true.B
       }
 
@@ -196,7 +196,8 @@ class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width:
           4.U -> "b1111".U
         ))
         lm.io.wen   := true.B
-        lm.io.waddr := io.mmio.DST_INFO(20, 0) + (request_counter * io.mmio.SIZE_CFG(23,16))   // Ignore the global address (2 of 0x200000) when writing LocalMem
+        // Ignore the global address (2 of 0x200000) when writing LocalMem
+        lm.io.waddr := io.mmio.DST_INFO(20, 0) + ((request_counter/(io.mmio.SIZE_CFG(15,8)>>2)) * io.mmio.SIZE_CFG(23,16)) + ((request_counter%(io.mmio.SIZE_CFG(15,8)>>2))<<2)
         lm.io.wstrb := mask_width << dest_offset
         lm.io.wdata := data_buffer << (dest_offset << 3.U)
       }
@@ -308,7 +309,7 @@ class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width:
       }
     }
     is(mWriteSend) {  // Only write cycle is issued to write LocalMem
-      mState := Mux(request_counter === io.mmio.SIZE_CFG(7,0)-1.U, mDone, mIdle)
+      mState := Mux(request_counter === io.mmio.SIZE_CFG(7,0)*(io.mmio.SIZE_CFG(15,8)>>2)-1.U, mDone, mIdle)
     }
     is(mDone) {
       mState := mIdle
@@ -317,11 +318,11 @@ class Memory_Mapped(mem_size: Int, s_id_width: Int, addr_width: Int, data_width:
 
   // Master State Datapath
   when(mState === mWriteSend) {
-    request_counter := Mux(request_counter === io.mmio.SIZE_CFG(7,0)-1.U, 0.U, request_counter + 1.U)
+    request_counter := Mux(request_counter === io.mmio.SIZE_CFG(7,0)*(io.mmio.SIZE_CFG(15,8)>>2)-1.U, 0.U, request_counter + 1.U)
   }
 
   when(mState === mReadSend) {
-    io.master.ar.bits.addr := io.mmio.SRC_INFO + (request_counter * io.mmio.SIZE_CFG(31,24))
+    io.master.ar.bits.addr := io.mmio.SRC_INFO + ((request_counter/(io.mmio.SIZE_CFG(15,8)>>2)) * io.mmio.SIZE_CFG(31,24)) + ((request_counter%(io.mmio.SIZE_CFG(15,8)>>2))<<2)
     source_offset := io.master.ar.bits.addr(1,0)
   }
 

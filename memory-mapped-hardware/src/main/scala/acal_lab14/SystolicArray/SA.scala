@@ -105,7 +105,7 @@ class SA(rows: Int, cols: Int, addr_width: Int, data_width: Int, reg_width: Int)
   .elsewhen(input_cnt === (rows + cols - 1).U || stateReg === sCheck){ // When to load psum 
     io.raddr := c_base_addr + (psum_cnt << 2) * ((io.mmio.MAT_MEM_STRIDE(23,16)+3.U)>>2)
   }
-  .elsewhen(stateReg === sPropagate){ // When to load input
+  .elsewhen(stateReg === sStall_2 || stateReg === sPropagate){ // When to load input
     io.raddr := a_base_addr + (input_cnt << 2) * ((io.mmio.MAT_MEM_STRIDE(7,0)+3.U)>>2)
   }
   .otherwise {
@@ -118,7 +118,7 @@ class SA(rows: Int, cols: Int, addr_width: Int, data_width: Int, reg_width: Int)
   word_writeData := List.range(0, cols).map { index => 
     Mux(io.mmio.ZERO_PSUM, 
         0.U, 
-        word_readData(byte*(index+1)-1, byte*index)) +
+        word_readData(byte*(cols-index)-1, byte*(cols-index-1))) +
     output_buffer.io.output(index).bits << byte * (cols - 1 - index) 
   }.reduce(_ + _)
 

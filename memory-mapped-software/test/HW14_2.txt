@@ -1,15 +1,15 @@
 mat_A:
-.word 0x01040204
+.word 0x03040103
+.word 0x03040101
 .word 0x03020303
-.word 0x03020102
-.word 0x02040402
-mat_B:
-.word 0x02040401
-.word 0x02040202
 .word 0x03030401
-.word 0x04030303
+mat_B:
+.word 0x03040103
+.word 0x03040101
+.word 0x03020303
+.word 0x03030401
 mat_C:
-.word 0x20262017
-.word 0x1f262513
-.word 0x151d1a0e
-.word 0x202a2614
+.word 0x21271613
+.word 0x1b210e11
+.word 0x21231a17
+.word 0x21231619
