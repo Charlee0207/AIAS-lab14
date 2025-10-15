@@ -1,4 +1,4 @@
-package acal_lab14.HW14_1
+package acal_lab14.HW14_3_1_SA
 
 import chisel3._
 import chiseltest._
@@ -17,17 +17,17 @@ import Utils.AXITester
 class topTest extends AnyFlatSpec
     with ChiselScalatestTester
     with AXITester{
-        val idWidth = HW14_1_Config.s_id_width
-        val addrWidth = HW14_1_Config.addr_width
-        val dataWidth = HW14_1_Config.data_width
-    "HW14_1 CPU" should "program SA to compute matrix multiplication" in {
+        val idWidth = HW14_3_1_SA_Config.s_id_width
+        val addrWidth = HW14_3_1_SA_Config.addr_width
+        val dataWidth = HW14_3_1_SA_Config.data_width
+    "HW14_3_1_SA CPU" should "program SA to compute matrix multiplication" in {
         test(new top()).withAnnotations(Seq(
             WriteVcdAnnotation,
         )){ dut =>
 
             dut.clock.setTimeout(0)
 
-            val lines    = Source.fromFile(HW14_1_Config.instr_asm_path).getLines.toList
+            val lines    = Source.fromFile(HW14_3_1_SA_Config.instr_asm_path).getLines.toList
 
             /* Initialize IO ports */
             dut.io.tb_slave.ar.initSource().setSourceClock(dut.clock)
@@ -188,8 +188,8 @@ class topTest extends AnyFlatSpec
                 else if(i==8)
                     println("Output Matrix :")
                 dut.io.tb_slave.r.ready.poke(true.B)
-                dut.io.tb_slave.ar.enqueue(genAXIAddr(BigInt(HW14_1_Config.Mem_Base_ADDR + 4 * i)))
-                val addr = (HW14_1_Config.Mem_Base_ADDR + 4 * i).toHexString
+                dut.io.tb_slave.ar.enqueue(genAXIAddr(BigInt(HW14_3_1_SA_Config.Mem_Base_ADDR + 4 * i)))
+                val addr = (HW14_3_1_SA_Config.Mem_Base_ADDR + 4 * i).toHexString
                 while(!dut.io.tb_slave.r.valid.peek().litToBoolean) {
                     dut.clock.step(1)
                 }

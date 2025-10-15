@@ -102,8 +102,8 @@ lui x31, 0x00000008
 addi x31, x31, 0x0000004c
 lw t1, 0(t6)
 add t1, t1, t0
-lui x07, 0x00000040
-addi x07, x07, 0x00000404
+lui x07, 0x00000020
+addi x07, x07, 0x00000203
 sw t2, 0(t1)
 lui x31, 0x00000008
 addi x31, x31, 0x00000050

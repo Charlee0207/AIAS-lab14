@@ -133,3 +133,165 @@ object HW14_2_Config {
     val addr_width     = 32                 // address width on bus
     val data_width     = 32                 // data width on bus
 }
+
+
+/* ------------------------------+
+ * Configuration for HW14_3_1_SA |
+ * ------------------------------+
+ */
+object HW14_3_1_SA_Config {
+    // addr_map -> a list contains 3 allocation in memory space -> means there are 3 slaves
+    // 0x8000   + 0x8000   = 0x10000
+    // 0x100000 + 0x100000 = 0x200000
+    // 0x200000 + 0x100000 = 0x300000
+    val addr_map       = List((Integer.parseInt("8000",16), Integer.parseInt("8000",16)),
+                              (Integer.parseInt("100000",16), Integer.parseInt("200000",16)),
+                              (Integer.parseInt("300000",16), Integer.parseInt("100000",16)))
+    val nMasters       = 3                  // number of master
+    val nSlaves        = addr_map.length    // number of slave
+    val s_id_width     = 17                 // id width
+    val addr_width     = 32                 // address width on bus
+    val data_width     = 32                 // data width on bus
+    val reg_width      = 32                 // reg width of MMIO_Regfile
+    val instr_asm_path = "src/main/resource/HW14_3_1_SA/inst.asm"
+    val instr_hex_path = "src/main/resource/HW14_3_1_SA/m_code.hex"
+    val data_hex_path  = "src/main/resource/HW14_3_1_SA/data.hex"
+    val data_mem_size  = 16                 // power of 2 in byte (2^16 bytes DataMem)
+    val Mem_Base_ADDR  = 0x200000           // Local mem base address
+    val Dma_Base_ADDR  = 0x300000           // DMA base address
+}
+
+
+/* -------------------------------+
+ * Configuration for HW14_3_1_DMA |
+ * -------------------------------+
+ */
+object HW14_3_1_DMA_Config {
+    // addr_map -> a list contains 3 allocation in memory space -> means there are 3 slaves
+    // 0x8000   + 0x8000   = 0x10000
+    // 0x100000 + 0x100000 = 0x200000
+    // 0x200000 + 0x100000 = 0x300000
+    val addr_map       = List((Integer.parseInt("8000",16), Integer.parseInt("8000",16)),
+                              (Integer.parseInt("100000",16), Integer.parseInt("200000",16)),
+                              (Integer.parseInt("300000",16), Integer.parseInt("100000",16)))
+    val nMasters       = 3                  // number of master
+    val nSlaves        = addr_map.length    // number of slave
+    val s_id_width     = 17                 // id width
+    val addr_width     = 32                 // address width on bus
+    val data_width     = 32                 // data width on bus
+    val reg_width      = 32                 // reg width of MMIO_Regfile
+    val instr_asm_path = "src/main/resource/HW14_3_1_DMA/inst.asm"
+    val instr_hex_path = "src/main/resource/HW14_3_1_DMA/m_code.hex"
+    val data_hex_path  = "src/main/resource/HW14_3_1_DMA/data.hex"
+    val data_mem_size  = 16                 // power of 2 in byte (2^16 bytes DataMem)
+    val Mem_Base_ADDR  = 0x200000           // Local mem base address
+    val Dma_Base_ADDR  = 0x300000           // DMA base address
+}
+
+
+/* ------------------------------+
+ * Configuration for HW14_3_2_SA |
+ * ------------------------------+
+ */
+object HW14_3_2_SA_Config {
+    // addr_map -> a list contains 3 allocation in memory space -> means there are 3 slaves
+    // 0x8000   + 0x8000   = 0x10000
+    // 0x100000 + 0x100000 = 0x200000
+    // 0x200000 + 0x100000 = 0x300000
+    val addr_map       = List((Integer.parseInt("8000",16), Integer.parseInt("8000",16)),
+                              (Integer.parseInt("100000",16), Integer.parseInt("200000",16)),
+                              (Integer.parseInt("300000",16), Integer.parseInt("100000",16)))
+    val nMasters       = 3                  // number of master
+    val nSlaves        = addr_map.length    // number of slave
+    val s_id_width     = 17                 // id width
+    val addr_width     = 32                 // address width on bus
+    val data_width     = 32                 // data width on bus
+    val reg_width      = 32                 // reg width of MMIO_Regfile
+    val instr_asm_path = "src/main/resource/HW14_3_2_SA/inst.asm"
+    val instr_hex_path = "src/main/resource/HW14_3_2_SA/m_code.hex"
+    val data_hex_path  = "src/main/resource/HW14_3_2_SA/data.hex"
+    val data_mem_size  = 16                 // power of 2 in byte (2^16 bytes DataMem)
+    val Mem_Base_ADDR  = 0x200000           // Local mem base address
+    val Dma_Base_ADDR  = 0x300000           // DMA base address
+}
+
+
+/* -------------------------------+
+ * Configuration for HW14_3_2_DMA |
+ * -------------------------------+
+ */
+object HW14_3_2_DMA_Config {
+    // addr_map -> a list contains 3 allocation in memory space -> means there are 3 slaves
+    // 0x8000   + 0x8000   = 0x10000
+    // 0x100000 + 0x100000 = 0x200000
+    // 0x200000 + 0x100000 = 0x300000
+    val addr_map       = List((Integer.parseInt("8000",16), Integer.parseInt("8000",16)),
+                              (Integer.parseInt("100000",16), Integer.parseInt("200000",16)),
+                              (Integer.parseInt("300000",16), Integer.parseInt("100000",16)))
+    val nMasters       = 3                  // number of master
+    val nSlaves        = addr_map.length    // number of slave
+    val s_id_width     = 17                 // id width
+    val addr_width     = 32                 // address width on bus
+    val data_width     = 32                 // data width on bus
+    val reg_width      = 32                 // reg width of MMIO_Regfile
+    val instr_asm_path = "src/main/resource/HW14_3_2_DMA/inst.asm"
+    val instr_hex_path = "src/main/resource/HW14_3_2_DMA/m_code.hex"
+    val data_hex_path  = "src/main/resource/HW14_3_2_DMA/data.hex"
+    val data_mem_size  = 16                 // power of 2 in byte (2^16 bytes DataMem)
+    val Mem_Base_ADDR  = 0x200000           // Local mem base address
+    val Dma_Base_ADDR  = 0x300000           // DMA base address
+}
+
+
+/* ------------------------------+
+ * Configuration for HW14_3_3_SA |
+ * ------------------------------+
+ */
+object HW14_3_3_SA_Config {
+    // addr_map -> a list contains 3 allocation in memory space -> means there are 3 slaves
+    // 0x8000   + 0x8000   = 0x10000
+    // 0x100000 + 0x100000 = 0x200000
+    // 0x200000 + 0x100000 = 0x300000
+    val addr_map       = List((Integer.parseInt("8000",16), Integer.parseInt("8000",16)),
+                              (Integer.parseInt("100000",16), Integer.parseInt("200000",16)),
+                              (Integer.parseInt("300000",16), Integer.parseInt("100000",16)))
+    val nMasters       = 3                  // number of master
+    val nSlaves        = addr_map.length    // number of slave
+    val s_id_width     = 17                 // id width
+    val addr_width     = 32                 // address width on bus
+    val data_width     = 32                 // data width on bus
+    val reg_width      = 32                 // reg width of MMIO_Regfile
+    val instr_asm_path = "src/main/resource/HW14_3_3_SA/inst.asm"
+    val instr_hex_path = "src/main/resource/HW14_3_3_SA/m_code.hex"
+    val data_hex_path  = "src/main/resource/HW14_3_3_SA/data.hex"
+    val data_mem_size  = 16                 // power of 2 in byte (2^16 bytes DataMem)
+    val Mem_Base_ADDR  = 0x200000           // Local mem base address
+    val Dma_Base_ADDR  = 0x300000           // DMA base address
+}
+
+
+/* -------------------------------+
+ * Configuration for HW14_3_3_DMA |
+ * -------------------------------+
+ */
+object HW14_3_3_DMA_Config {
+    // addr_map -> a list contains 3 allocation in memory space -> means there are 3 slaves
+    // 0x8000   + 0x8000   = 0x10000
+    // 0x100000 + 0x100000 = 0x200000
+    // 0x200000 + 0x100000 = 0x300000
+    val addr_map       = List((Integer.parseInt("8000",16), Integer.parseInt("8000",16)),
+                              (Integer.parseInt("100000",16), Integer.parseInt("200000",16)),
+                              (Integer.parseInt("300000",16), Integer.parseInt("100000",16)))
+    val nMasters       = 3                  // number of master
+    val nSlaves        = addr_map.length    // number of slave
+    val s_id_width     = 17                 // id width
+    val addr_width     = 32                 // address width on bus
+    val data_width     = 32                 // data width on bus
+    val reg_width      = 32                 // reg width of MMIO_Regfile
+    val instr_asm_path = "src/main/resource/HW14_3_3_DMA/inst.asm"
+    val instr_hex_path = "src/main/resource/HW14_3_3_DMA/m_code.hex"
+    val data_hex_path  = "src/main/resource/HW14_3_3_DMA/data.hex"
+    val data_mem_size  = 16                 // power of 2 in byte (2^16 bytes DataMem)
+    val Mem_Base_ADDR  = 0x200000           // Local mem base address
+    val Dma_Base_ADDR  = 0x300000           // DMA base address
+}

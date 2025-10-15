@@ -22,8 +22,8 @@ class MMIO(val reg_width: Int) extends Bundle {
   val MATA_MEM_ADDR  = Output(UInt(reg_width.W))
   val MATB_MEM_ADDR  = Output(UInt(reg_width.W))
   val MATC_MEM_ADDR  = Output(UInt(reg_width.W))
-  val MAT_MEM_STRIDE = Output(UInt(reg_width.W))  // [23:16]: MATC_MEM_STRIDE, [15:8]: MATB_MEM_STRIDE, [7:0]: MATA_MEM_STRIDE
-  val MAT_BUF        = Output(UInt(reg_width.W))
+  val MAT_MEM_STRIDE = Output(UInt(reg_width.W))  // [23:16]: mat C byte stride, [15:8]: mat B byte stride, [7:0]: mat A byte stride
+  val ZERO_PSUM      = Output(Bool())             // Used to indicate the first tile of MM, no psum is needed
 
   // For loading data
   val LOAD_EN       = Output(Bool())            // Set to 1 by CPU to enable transfer data
@@ -92,7 +92,7 @@ class MMIO_Regfile(addr_width: Int, reg_width: Int) extends Module {
   io.mmio.MATB_MEM_ADDR  := RegNext(RegFile(6))
   io.mmio.MATC_MEM_ADDR  := RegNext(RegFile(7))
   io.mmio.MAT_MEM_STRIDE := RegNext(RegFile(8))
-  io.mmio.MAT_BUF        := RegNext(RegFile(9))
+  io.mmio.ZERO_PSUM      := RegNext(RegFile(9)(0).asBool)
   io.mmio.LOAD_EN        := RegNext(RegFile(10)(0).asBool)
   io.mmio.LOAD_DONE      := RegNext(RegFile(11)(0).asBool)
   io.mmio.SRC_INFO       := RegNext(RegFile(12))

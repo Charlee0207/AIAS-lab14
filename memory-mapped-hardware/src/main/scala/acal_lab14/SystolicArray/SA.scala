@@ -69,6 +69,7 @@ class SA(rows: Int, cols: Int, addr_width: Int, data_width: Int, reg_width: Int)
   val weight_cnt = RegInit(rows.U(3.W))
   val input_cnt  = RegInit(0.U(3.W))
   val output_cnt = RegInit(0.U(3.W))
+  val psum_cnt   = RegInit(0.U(3.W))
 
   // use for select partial read data
   val word_readData = Wire(UInt(data_width.W))
@@ -84,7 +85,7 @@ class SA(rows: Int, cols: Int, addr_width: Int, data_width: Int, reg_width: Int)
 
   // wiring io.rdata <---> input_buffer.io.input
   List.range(0, rows).map { index =>
-    input_buffer.io.input(index).bits  := word_readData(byte * (index + 1) - 1, byte * index)
+    input_buffer.io.input(index).bits  := word_readData(byte * (rows-index) - 1, byte * (rows-index-1))
     input_buffer.io.input(index).valid := (stateReg === sPropagate) && (input_cnt <= 4.U)
   }
 
@@ -97,15 +98,27 @@ class SA(rows: Int, cols: Int, addr_width: Int, data_width: Int, reg_width: Int)
   }
 
   // assign io.raddr and io.waddr
-  io.raddr := Mux(
-    stateReg === sStall_1 || stateReg === sPreload, // sPreload or sPropagate
-    b_base_addr + ((weight_cnt - 1.U) << 2),
-    a_base_addr + (input_cnt << 2)
-  )
-  io.waddr := c_base_addr + (output_cnt << 2)
+  when(stateReg === sStall_1 || stateReg === sPreload){ // When to load weight
+    // Divide MAT_MEM_STRIDE by 4 to get word stride and take the ceil (i.e., (MAT_MEM_STRIDE+3)>>2)
+    io.raddr := b_base_addr + ((weight_cnt - 1.U) << 2) * (((io.mmio.MAT_MEM_STRIDE(15,8))+3.U) >> 2)
+  }
+  .elsewhen(input_cnt === (rows + cols - 1).U || stateReg === sCheck){ // When to load psum 
+    io.raddr := c_base_addr + (psum_cnt << 2) * ((io.mmio.MAT_MEM_STRIDE(23,16)+3.U)>>2)
+  }
+  .elsewhen(stateReg === sPropagate){ // When to load input
+    io.raddr := a_base_addr + (input_cnt << 2) * ((io.mmio.MAT_MEM_STRIDE(7,0)+3.U)>>2)
+  }
+  .otherwise {
+    io.raddr := 0.U
+  }
+  io.waddr := c_base_addr + (output_cnt << 2) * ((io.mmio.MAT_MEM_STRIDE(23,16)+3.U)>>2)
 
   // assign word_writeData and io.wdata, io.wstrb and io.wen
+  // word_writeData = (b0 << 24) + (b1 << 16) + (b2 << 8) + b3
   word_writeData := List.range(0, cols).map { index => 
+    Mux(io.mmio.ZERO_PSUM, 
+        0.U, 
+        word_readData(byte*(index+1)-1, byte*index)) +
     output_buffer.io.output(index).bits << byte * (cols - 1 - index) 
   }.reduce(_ + _)
 
@@ -160,14 +173,23 @@ class SA(rows: Int, cols: Int, addr_width: Int, data_width: Int, reg_width: Int)
   when(stateReg === sStall_1 || stateReg === sPreload) {
     weight_cnt := Mux(io.mmio.ENABLE_OUT, weight_cnt - 1.U, rows.U)
   }.elsewhen(stateReg === sStall_2 || stateReg === sPropagate) {
-    input_cnt := Mux(io.mmio.ENABLE_OUT, input_cnt + 1.U, 0.U)
+    when(io.mmio.ENABLE_OUT) {
+      input_cnt := input_cnt + 1.U
+      psum_cnt := Mux(input_cnt === (rows + cols - 1).U, psum_cnt + 1.U, 0.U)
+    }
+    .otherwise {
+      input_cnt := 0.U
+      psum_cnt := 0.U
+    }
   }.elsewhen(stateReg === sCheck) {
-    output_cnt := output_cnt + Mux(output_buffer.io.output(0).valid, 1.U, 0.U)
+    output_cnt := Mux(output_buffer.io.output(0).valid, output_cnt + 1.U, output_cnt)
+    psum_cnt := Mux(psum_cnt === (rows - 1).U, psum_cnt, psum_cnt + 1.U)
   }.elsewhen(stateReg === sFinish) {
     // reset counters
     weight_cnt := rows.U
     input_cnt  := 0.U
     output_cnt := 0.U
+    psum_cnt   := 0.U
   }.otherwise {
     // DontCare
   }
