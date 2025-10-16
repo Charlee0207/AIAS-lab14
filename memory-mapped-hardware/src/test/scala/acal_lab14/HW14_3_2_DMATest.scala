@@ -194,10 +194,10 @@ class topTest extends AnyFlatSpec
                     dut.clock.step(1)
                 }
                 var value : String = ""
-                for(i <- 4 until 0 by -1) {
+                for(j <- 0 until 4) {
                     value += String
                     .format("%" + 2 + "s", dut.io.tb_slave.r.bits.data.peek()
-                    .asUInt()(8 * i - 1, 8 * i - 8)
+                    .asUInt()(8 * j + 7, 8 * j)
                     .litValue.toString(10))
                     .replace(' ', '0')
                 }

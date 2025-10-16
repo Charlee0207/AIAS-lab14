@@ -1,4 +1,4 @@
-package acal_lab14.HW14_3_1_DMA
+package acal_lab14.HW14_4_SA
 
 import chisel3._
 import chiseltest._
@@ -17,17 +17,17 @@ import Utils.AXITester
 class topTest extends AnyFlatSpec
     with ChiselScalatestTester
     with AXITester{
-        val idWidth = HW14_3_1_DMA_Config.s_id_width
-        val addrWidth = HW14_3_1_DMA_Config.addr_width
-        val dataWidth = HW14_3_1_DMA_Config.data_width
-    "HW14_3_1_DMA CPU" should "program DMA and SA to compute matrix multiplication" in {
+        val idWidth = HW14_4_SA_Config.s_id_width
+        val addrWidth = HW14_4_SA_Config.addr_width
+        val dataWidth = HW14_4_SA_Config.data_width
+    "HW14_4_SA CPU" should "program SA to compute matrix multiplication" in {
         test(new top()).withAnnotations(Seq(
             WriteVcdAnnotation,
         )){ dut =>
 
             dut.clock.setTimeout(0)
 
-            val lines    = Source.fromFile(HW14_3_1_DMA_Config.instr_asm_path).getLines.toList
+            val lines    = Source.fromFile(HW14_4_SA_Config.instr_asm_path).getLines.toList
 
             /* Initialize IO ports */
             dut.io.tb_slave.ar.initSource().setSourceClock(dut.clock)
@@ -37,7 +37,7 @@ class topTest extends AnyFlatSpec
             dut.io.tb_slave.b.initSink().setSinkClock(dut.clock)
 
             /* Performance counter */
-            // var Cycle_Count = 0
+            var Cycle_Count = 0
             var Inst_Count = 0
             var Conditional_Branch_Count = 0
             var Unconditional_Branch_Count = 0
@@ -45,10 +45,10 @@ class topTest extends AnyFlatSpec
             var Unconditional_Branch_Hit_Count = 0
             var Flush_Count = 0
             /* Performance counter */
+            var transfer_count = 0
+            var multiplication_count = 0
 
             while (!dut.io.Hcf.peek().litToBoolean) {
-                /*
-                var Cycle_Count = dut.io.Cycle_Count.peek().litValue.toInt
                 var PC_IF = dut.io.IF_PC.peek().litValue.toInt
                 var PC_ID = dut.io.ID_PC.peek().litValue.toInt
                 var PC_EXE = dut.io.EXE_PC.peek().litValue.toInt
@@ -72,6 +72,7 @@ class topTest extends AnyFlatSpec
                 var EXE_Jump = dut.io.EXE_Jump.peek().litValue.toInt
                 var EXE_Branch = dut.io.EXE_Branch.peek().litValue.toInt
 
+                /*
                 println(
                     s"[Cycle_Count] = ${Cycle_Count}"
                 )
@@ -103,7 +104,9 @@ class topTest extends AnyFlatSpec
                     .format(Stall_MA)} [Stall_DH ] ${"%1d".format(Stall_DH)} ")
                 println("==============================================")
 
+                */
                 /* Performance counter */
+                Cycle_Count += 1
                 if (Stall_MA == 0 && Stall_DH == 0) {
                     Inst_Count += 1 // Not Stall, read inst
 
@@ -125,11 +128,32 @@ class topTest extends AnyFlatSpec
                     }
                 }
                 /* Performance counter */
-                */
+
+                if(dut.io.cpu_m_aw_valid.peek().litToBoolean && dut.io.cpu_m_aw_ready.peek().litToBoolean) {
+                    if(dut.io.cpu_m_aw_addr.peek().litValue == "h100028".U.litValue) {
+                        if(transfer_count == 0) {
+                            println(s"Transfer mat_A data to SA")
+                            transfer_count += 1
+                        }
+                        else if(transfer_count == 1) {
+                            println(s"Transfer mat_B data to SA")
+                            transfer_count += 1
+                        }
+                        println("==============================================")
+                    } 
+                }
+                if(dut.io.cpu_m_aw_valid.peek().litToBoolean && dut.io.cpu_m_aw_ready.peek().litToBoolean) {
+                    if(dut.io.cpu_m_aw_addr.peek().litValue == "h100000".U.litValue) {
+                        println(s"Multiply tile of j=${(multiplication_count/5)%9}, k=${multiplication_count%5}")
+                        multiplication_count += 1
+                        println("==============================================")
+                    }
+                }
+
                 dut.clock.step(1)
             }
 
-            println("Cycle: " + dut.io.Cycle_Count.peek().toString)
+            println("Cycle: " + Cycle_Count)
             println("Inst: Hcf")
             println("This is the end of the program!!")
             println("==============================")
@@ -175,33 +199,129 @@ class topTest extends AnyFlatSpec
                 )
             }
 
+            /* Lab 14_4 performance counter */
+            // Performance Counter
+            println("==============================================================")
+            println("Performance Counter:")
+            println(s"[Cycle Count                    ] ${"%8d".format(Cycle_Count)}")
+            println(s"[Inst Count                     ] ${"%8d".format(Inst_Count)}")
+            println(
+                s"[Conditional Branch Count       ] ${"%8d".format(Conditional_Branch_Count)}"
+            )
+            println(
+                s"[Unconditional Branch Count     ] ${"%8d".format(Unconditional_Branch_Count)}"
+            )
+            println(
+                s"[Conditional Branch Hit Count   ] ${"%8d".format(Conditional_Branch_Hit_Count)}"
+            )
+            println(
+                s"[Unconditional Branch Hit Count ] ${"%8d".format(Unconditional_Branch_Hit_Count)}"
+            )
+            println(s"[Flush Count                    ] ${"%8d".format(Flush_Count)}")
+
+            // Performance Analysis
+            println("==============================================================")
+            println("Performance Analysis:")
+            println(
+                s"[CPI                            ] ${"%8f".format(Cycle_Count.toFloat / Inst_Count.toFloat)}"
+            )
+            println("==============================================================")
+            /* Lab 14_4 performance counter */
+
             println("==============================")
             
             println("Value in Systolic Array Memory (in decimal)")
             dut.io.tb_en.poke(true.B)
 
-            for(i <- 0 until 12) {
+            val mat_A_offset = 0x0
+            val mat_B_offset = 0x50
+            val mat_C_offset = 0x320
+
+            for(i <- 0 until 5*4) {
                 if(i==0)
                     println("Matrix A :")
-                else if(i==4)
-                    println("Matrix B :")
-                else if(i==8)
-                    println("Output Matrix :")
                 dut.io.tb_slave.r.ready.poke(true.B)
-                dut.io.tb_slave.ar.enqueue(genAXIAddr(BigInt(HW14_3_1_DMA_Config.Mem_Base_ADDR + 4 * i)))
-                val addr = (HW14_3_1_DMA_Config.Mem_Base_ADDR + 4 * i).toHexString
+                dut.io.tb_slave.ar.enqueue(genAXIAddr(BigInt(HW14_4_SA_Config.Mem_Base_ADDR + mat_A_offset + 4 * i)))
+
+                val start_addr = (HW14_4_SA_Config.Mem_Base_ADDR + mat_A_offset + 4 * i).toHexString
+                val end_addr = (HW14_4_SA_Config.Mem_Base_ADDR + mat_A_offset + 4 * i + 4).toHexString
                 while(!dut.io.tb_slave.r.valid.peek().litToBoolean) {
                     dut.clock.step(1)
                 }
                 var value : String = ""
                 for(j <- 0 until 4) {
                     value += String
-                    .format("%" + 2 + "s", dut.io.tb_slave.r.bits.data.peek()
+                    .format("%" + 3 + "s", dut.io.tb_slave.r.bits.data.peek()
                     .asUInt()(8 * j + 7, 8 * j)
                     .litValue.toString(10))
-                    .replace(' ', '0')
+                    
+                    value += " "
                 }
-                println(s"mem[0x${addr}] = ${value}")
+                if(i%5 == 0){
+                    print(s"mem[0x${start_addr}~0x${end_addr}] = ")
+                }
+                print(s"${value}")
+                if(i%5 == 4){
+                    println("")
+                }
+            }
+
+            for(i <- 0 until 9*20) {
+                if(i==0)
+                    println("Matrix B :")
+                dut.io.tb_slave.r.ready.poke(true.B)
+                dut.io.tb_slave.ar.enqueue(genAXIAddr(BigInt(HW14_4_SA_Config.Mem_Base_ADDR + mat_B_offset + 4 * i)))
+
+                val start_addr = (HW14_4_SA_Config.Mem_Base_ADDR + mat_B_offset + 4 * i).toHexString
+                val end_addr = (HW14_4_SA_Config.Mem_Base_ADDR + mat_B_offset + 4 * i + 8).toHexString
+                while(!dut.io.tb_slave.r.valid.peek().litToBoolean) {
+                    dut.clock.step(1)
+                }
+                var value : String = ""
+                for(j <- 0 until 4) {
+                    value += String
+                    .format("%" + 3 + "s", dut.io.tb_slave.r.bits.data.peek()
+                    .asUInt()(8 * j + 7, 8 * j)
+                    .litValue.toString(10))
+                    
+                    value += " "
+                }
+                if(i%9 == 0){
+                    print(s"mem[0x${start_addr}~0x${end_addr}] = ")
+                }
+                print(s"${value}")
+                if(i%9 == 8){
+                    println("")
+                }
+            }
+
+            for(i <- 0 until 9*4) {
+                if(i==0)
+                    println("Matrix B :")
+                dut.io.tb_slave.r.ready.poke(true.B)
+                dut.io.tb_slave.ar.enqueue(genAXIAddr(BigInt(HW14_4_SA_Config.Mem_Base_ADDR + mat_C_offset + 4 * i)))
+
+                val start_addr = (HW14_4_SA_Config.Mem_Base_ADDR + mat_C_offset + 4 * i).toHexString
+                val end_addr = (HW14_4_SA_Config.Mem_Base_ADDR + mat_C_offset + 4 * i + 8).toHexString
+                while(!dut.io.tb_slave.r.valid.peek().litToBoolean) {
+                    dut.clock.step(1)
+                }
+                var value : String = ""
+                for(j <- 0 until 4) {
+                    value += String
+                    .format("%" + 3 + "s", dut.io.tb_slave.r.bits.data.peek()
+                    .asUInt()(8 * j + 7, 8 * j)
+                    .litValue.toString(10))
+                    
+                    value += " "
+                }
+                if(i%9 == 0){
+                    print(s"mem[0x${start_addr}~0x${end_addr}] = ")
+                }
+                print(s"${value}")
+                if(i%9 == 8){
+                    println("")
+                }
             }
         }
     }

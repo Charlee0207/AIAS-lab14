@@ -10,20 +10,20 @@
 .data
 ## allocate memory space for Martix A, B, C data in shared data memory. (start from 0x8000)
 mat_A:
-.word 0x01010400
-.word 0x04020300
-.word 0x00000000
-.word 0x00000000
+.byte 1 1 4 0
+.byte 4 2 3 0
+.byte 0 0 0 0
+.byte 0 0 0 0
 mat_B:
-.word 0x03020000
-.word 0x01030000
-.word 0x04010000
-.word 0x00000000
+.byte 3 2 0 0
+.byte 1 3 0 0
+.byte 4 1 0 0
+.byte 0 0 0 0
 mat_C:
-.word 0x14090000
-.word 0x1a110000
-.word 0x00000000
-.word 0x00000000
+.byte 0 0 0 0
+.byte 0 0 0 0
+.byte 0 0 0 0
+.byte 0 0 0 0
 
 ## allocate memory space for constant value in shared data memory for computation.
 ACCEL_REG_BASE_ADDR:

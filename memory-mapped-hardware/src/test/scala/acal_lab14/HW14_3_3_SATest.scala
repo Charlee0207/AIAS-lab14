@@ -45,6 +45,8 @@ class topTest extends AnyFlatSpec
             var Unconditional_Branch_Hit_Count = 0
             var Flush_Count = 0
             /* Performance counter */
+            var transfer_count = 0
+            var multiplication_count = 0
 
             while (!dut.io.Hcf.peek().litToBoolean) {
                 /*
@@ -126,6 +128,28 @@ class topTest extends AnyFlatSpec
                 }
                 /* Performance counter */
                 */
+
+                if(dut.io.cpu_m_aw_valid.peek().litToBoolean && dut.io.cpu_m_aw_ready.peek().litToBoolean) {
+                    if(dut.io.cpu_m_aw_addr.peek().litValue == "h100028".U.litValue) {
+                        if(transfer_count == 0) {
+                            println(s"Transfer mat_A data to SA")
+                            transfer_count += 1
+                        }
+                        else if(transfer_count == 1) {
+                            println(s"Transfer mat_B data to SA")
+                            transfer_count += 1
+                        }
+                        println("==============================================")
+                    } 
+                }
+                if(dut.io.cpu_m_aw_valid.peek().litToBoolean && dut.io.cpu_m_aw_ready.peek().litToBoolean) {
+                    if(dut.io.cpu_m_aw_addr.peek().litValue == "h100000".U.litValue) {
+                        println(s"Multiply tile of i=${(multiplication_count/16)%4}, j=${(multiplication_count/4)%4}, k=${multiplication_count%4}")
+                        multiplication_count += 1
+                        println("==============================================")
+                    }
+                }
+
                 dut.clock.step(1)
             }
 
@@ -180,28 +204,37 @@ class topTest extends AnyFlatSpec
             println("Value in Systolic Array Memory (in decimal)")
             dut.io.tb_en.poke(true.B)
 
-            for(i <- 0 until 12) {
-                if(i==0)
+            for(i <- 0 until 64*3) {
+                if(i==64*0)
                     println("Matrix A :")
-                else if(i==4)
+                else if(i==64*1)
                     println("Matrix B :")
-                else if(i==8)
+                else if(i==64*2)
                     println("Output Matrix :")
                 dut.io.tb_slave.r.ready.poke(true.B)
                 dut.io.tb_slave.ar.enqueue(genAXIAddr(BigInt(HW14_3_3_SA_Config.Mem_Base_ADDR + 4 * i)))
-                val addr = (HW14_3_3_SA_Config.Mem_Base_ADDR + 4 * i).toHexString
+
+                val start_addr = (HW14_3_3_SA_Config.Mem_Base_ADDR + 4 * i).toHexString
+                val end_addr = (HW14_3_3_SA_Config.Mem_Base_ADDR + 4 * i + 3).toHexString
                 while(!dut.io.tb_slave.r.valid.peek().litToBoolean) {
                     dut.clock.step(1)
                 }
                 var value : String = ""
-                for(i <- 4 until 0 by -1) {
+                for(j <- 0 until 4) {
                     value += String
-                    .format("%" + 2 + "s", dut.io.tb_slave.r.bits.data.peek()
-                    .asUInt()(8 * i - 1, 8 * i - 8)
+                    .format("%" + 3 + "s", dut.io.tb_slave.r.bits.data.peek()
+                    .asUInt()(8 * j + 7, 8 * j)
                     .litValue.toString(10))
-                    .replace(' ', '0')
+                    
+                    value += " "
                 }
-                println(s"mem[0x${addr}] = ${value}")
+                if(i%4 == 0){
+                    print(s"mem[0x${start_addr}~0x${end_addr}] = ")
+                }
+                print(s"${value}")
+                if(i%4 == 3){
+                    println("")
+                }
             }
         }
     }

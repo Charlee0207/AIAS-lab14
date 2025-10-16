@@ -157,17 +157,17 @@ class Controller(memAddrWidth: Int) extends Module {
   io.E_ALUSel := MuxLookup(EXE_opcode, (Cat(0.U(7.W), "b11111".U, 0.U(3.W))), Seq(
     OP -> (Cat(EXE_funct7, "b11111".U, EXE_funct3)),
     OP_IMM -> MuxLookup(io.EXE_Inst(31, 25), Cat("b0000000_11111".U, EXE_funct3), Seq(
-                "b0100000".U -> Mux(EXE_funct3==="b101".U, "b0100000_11111_101".U, Cat("b0000000_11111".U, EXE_funct3)),  // If SRAI, else imm
-                "b0110000".U -> MuxLookup(Cat(io.EXE_Inst(24, 20), EXE_funct3), Cat("b0110000_11111".U, EXE_funct3), Seq(
-                                  "b00000_001".U -> "b0110000_00000_001".U,   // CLZ
-                                  "b00001_001".U -> "b0110000_00001_001".U,   // CTZ
-                                  "b00010_001".U -> "b0110000_00010_001".U,   // CPOP
-                                  "b00100_001".U -> "b0110000_00100_001".U,   // SEXT_B
-                                  "b00101_001".U -> "b0110000_00101_001".U    // SEXT_H
-                                )),
-                "b0010100".U -> Mux(EXE_funct3==="b001".U, "b0010100_11111_001".U, "b0010100_00111_101".U),   // If BSETI, else ORC_B
-                "b0100100".U -> Mux(EXE_funct3==="b001".U ,"b0100100_11111_001".U, "b0100100_11111_101".U),   // If BCLRI, else BEXTI
-                "b0110100".U -> Mux(EXE_funct3==="b001".U, "b0110100_11111_001".U, "b0110100_11000_101".U)    // If BINVI, else REV8
+                "b0100000".U -> Mux(EXE_funct3==="b101".U, "b0100000_11111_101".U, Cat("b0000000_11111".U, EXE_funct3))  // If SRAI, else imm
+                // "b0110000".U -> MuxLookup(Cat(io.EXE_Inst(24, 20), EXE_funct3), Cat("b0110000_11111".U, EXE_funct3), Seq(
+                //                   "b00000_001".U -> "b0110000_00000_001".U,   // CLZ
+                //                   "b00001_001".U -> "b0110000_00001_001".U,   // CTZ
+                //                   "b00010_001".U -> "b0110000_00010_001".U,   // CPOP
+                //                   "b00100_001".U -> "b0110000_00100_001".U,   // SEXT_B
+                //                   "b00101_001".U -> "b0110000_00101_001".U    // SEXT_H
+                //                 )),
+                // "b0010100".U -> Mux(EXE_funct3==="b001".U, "b0010100_11111_001".U, "b0010100_00111_101".U),   // If BSETI, else ORC_B
+                // "b0100100".U -> Mux(EXE_funct3==="b001".U ,"b0100100_11111_001".U, "b0100100_11111_101".U),   // If BCLRI, else BEXTI
+                // "b0110100".U -> Mux(EXE_funct3==="b001".U, "b0110100_11111_001".U, "b0110100_11000_101".U)    // If BINVI, else REV8
               )),
     LOAD ->   "b0000000_11111_000".U,  // ADD
     STORE ->  "b0000000_11111_000".U,  // ADD

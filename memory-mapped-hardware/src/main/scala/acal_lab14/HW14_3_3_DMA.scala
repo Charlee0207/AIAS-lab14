@@ -53,6 +53,11 @@ class top extends Module {
         val EXE_Branch = Output(Bool())
         
         val Cycle_Count = Output(UInt(32.W))
+
+        // For observing the MMIO registers
+        val cpu_m_aw_ready = Output(Bool())
+        val cpu_m_aw_valid = Output(Bool())
+        val cpu_m_aw_addr = Output(UInt(32.W))
     })
 
     val cpu = Module(new PipelinedCPU(HW14_3_3_DMA_Config.s_id_width, HW14_3_3_DMA_Config.addr_width, HW14_3_3_DMA_Config.data_width, HW14_3_3_DMA_Config.instr_hex_path))
@@ -107,6 +112,9 @@ class top extends Module {
     // io.inst := cpu.im.io.inst
     io.rdata := cpu_axi_if.io.rdata
     io.wdata := cpu_axi_if.io.wdata
+    io.cpu_m_aw_ready   := cpu_axi_if.io.master.aw.ready
+    io.cpu_m_aw_valid   := cpu_axi_if.io.master.aw.valid
+    io.cpu_m_aw_addr    := cpu_axi_if.io.master.aw.bits.addr
     
     // Memory dump
     // dm.io.dump := io.Dump_Mem

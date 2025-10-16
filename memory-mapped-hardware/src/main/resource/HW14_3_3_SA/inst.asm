@@ -373,10 +373,6 @@ add t1, t1, t0
 lw t2, 0(t1)
 beq t2, x0, wait_sa_0_1_1
 sw x0, 0(t1)
-nop zero, zero, 0
-nop zero, zero, 0
-nop zero, zero, 0
-nop zero, zero, 0
 lui x31, 0x00000008
 addi x31, x31, 0x00000310
 lw t1, 0(t6)

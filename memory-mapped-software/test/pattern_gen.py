@@ -1,12 +1,7 @@
 import numpy as np
 
 def gen_pattern_4x4():
-    np.random.seed(42)
     return np.random.randint(1, 5, (4, 4))
-
-def gen_pattern_16x16():
-    np.random.seed(42)
-    return np.random.randint(1, 5, (16, 16))
 
 def gen_pattern_2x3():
     pattern_mask = np.zeros((4, 4))
@@ -24,13 +19,10 @@ def gen_pattern_3x2():
     pattern = pattern * pattern_mask
     return pattern
 
-def gen_pattern_4x4():
-    np.random.seed(42)
-    return np.random.randint(1, 5, (4, 4))
-
-def gen_pattern_16x16():
-    np.random.seed(42)
-    return np.random.randint(1, 5, (16, 16))
+def gen_pattern_16x16(seed):
+    np.random.seed(seed)
+    pattern = np.random.randint(1, 5, (16, 16))
+    return pattern
 
 def write_mat(filename, mat_A, mat_B, mat_C):
     with open(filename, 'w') as f:
@@ -53,24 +45,19 @@ def write_mat(filename, mat_A, mat_B, mat_C):
         write_sub_mat("mat_C", mat_C)
 
 def write_assem(mat_A, mat_B, mat_C):
-    def write_sub_mat(name, mat):
+    def write_sub_mat(name, mat, digits):
         assem = []
         assem.append(f"{name}:")
         for row in mat:
-            assem.append(".word")
-            count = 0
+            assem.append(".byte")
             for col in row:
-                if count == 0:
-                    assem[-1] += (" 0x")
-
-                assem[-1] +=(f"{int(col):02x}")
-                count = (count + 1) % 4  
+                assem[-1] +=(f" {int(col):{digits}d}")
         return assem      
 
     assem = []
-    assem.extend(write_sub_mat("mat_A", mat_A))
-    assem.extend(write_sub_mat("mat_B", mat_B))
-    assem.extend(write_sub_mat("mat_C", mat_C))
+    assem.extend(write_sub_mat("mat_A", mat_A, 1))
+    assem.extend(write_sub_mat("mat_B", mat_B, 1))
+    assem.extend(write_sub_mat("mat_C", mat_C, 3))
     
     return assem
 
@@ -80,8 +67,8 @@ def write_assem_with_comment(filename, assem, comment):
             f.write(code + "\n")
 
 def gen_pattern_HW14_1():
-    mat_A = gen_pattern_2x3().astype(np.uint8)
-    mat_B = gen_pattern_3x2().astype(np.uint8)
+    mat_A = gen_pattern_2x3(41).astype(np.uint8)
+    mat_B = gen_pattern_3x2(42).astype(np.uint8)
     mat_C = np.matmul(mat_A, mat_B).astype(np.uint32)
 
     if np.any(mat_C > np.iinfo(np.uint8).max):
@@ -90,8 +77,8 @@ def gen_pattern_HW14_1():
     return mat_A, mat_B, mat_C
 
 def gen_pattern_HW14_2():
-    mat_A = gen_pattern_4x4().astype(np.uint8)
-    mat_B = gen_pattern_4x4().astype(np.uint8)
+    mat_A = gen_pattern_4x4(41).astype(np.uint8)
+    mat_B = gen_pattern_4x4(42).astype(np.uint8)
     mat_C = np.matmul(mat_A, mat_B).astype(np.uint32)
 
     if np.any(mat_C > np.iinfo(np.uint8).max):
@@ -100,8 +87,8 @@ def gen_pattern_HW14_2():
     return mat_A, mat_B, mat_C
 
 def gen_pattern_HW14_3():
-    mat_A = gen_pattern_16x16().astype(np.uint8)
-    mat_B = gen_pattern_16x16().astype(np.uint8)
+    mat_A = gen_pattern_16x16(41).astype(np.uint8)
+    mat_B = gen_pattern_16x16(42).astype(np.uint8)
     mat_C = np.matmul(mat_A, mat_B).astype(np.uint32)
 
     if np.any(mat_C > np.iinfo(np.uint8).max):

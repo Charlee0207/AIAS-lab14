@@ -85,7 +85,7 @@ class SA(rows: Int, cols: Int, addr_width: Int, data_width: Int, reg_width: Int)
 
   // wiring io.rdata <---> input_buffer.io.input
   List.range(0, rows).map { index =>
-    input_buffer.io.input(index).bits  := word_readData(byte * (rows-index) - 1, byte * (rows-index-1))
+    input_buffer.io.input(index).bits  := word_readData(byte * (index + 1) - 1, byte * index)
     input_buffer.io.input(index).valid := (stateReg === sPropagate) && (input_cnt <= 4.U)
   }
 
